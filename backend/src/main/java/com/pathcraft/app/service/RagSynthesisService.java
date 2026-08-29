@@ -40,34 +40,28 @@ public class RagSynthesisService {
                     "What would you like to explore, build, or ask today?";
         }
 
-        // 2. Retrieve Relevant Knowledge Chunks from In-Memory Knowledge Store
-        List<RagKnowledgeService.ScoredChunk> retrievedChunks = knowledgeService.retrieve(userQuery, 3);
+        // 2. Retrieve Relevant Knowledge Chunks from In-Memory Knowledge Store as Grounding Context ONLY
+        List<RagKnowledgeService.ScoredChunk> retrievedChunks = knowledgeService.retrieve(userQuery, 2);
 
         // 3. Build System Instruction for LLM
         StringBuilder systemInstruction = new StringBuilder();
-        systemInstruction.append("You are LearnPath AI Technical Mentor & Staff Software Engineer. Provide comprehensive, accurate, high-quality technical answers with clean markdown, working code examples, complexity analysis, and architectural insights. Answer ANY user question thoroughly.\n");
+        systemInstruction.append("You are LearnPath AI Technical Mentor & Staff Software Engineer (ChatGPT-grade AI assistant). Answer ANY programming, architecture, system design, algorithm, tech roadmap, or career question accurately with clean markdown, working code examples, complexity analysis, and step-by-step reasoning.\n");
 
         if (!retrievedChunks.isEmpty()) {
-            systemInstruction.append("\nGROUND TRUTH RETRIEVED KNOWLEDGE CHUNKS:\n");
-            for (RagKnowledgeService.ScoredChunk sc : retrievedChunks) {
-                RagKnowledgeService.KnowledgeChunk c = sc.getChunk();
-                systemInstruction.append("--- [DOC: ").append(c.getTitle()).append(" (").append(c.getDomain()).append(")] ---\n");
-                systemInstruction.append(c.getSummary()).append("\n");
-                systemInstruction.append(c.getIntuition()).append("\n");
-                if (c.getComparisonTable() != null && !c.getComparisonTable().isBlank()) {
-                    systemInstruction.append(c.getComparisonTable()).append("\n");
-                }
-                if (c.getCodeSnippet() != null && !c.getCodeSnippet().isBlank()) {
-                    systemInstruction.append(c.getCodeSnippet()).append("\n");
-                }
+            RagKnowledgeService.ScoredChunk top = retrievedChunks.get(0);
+            if (top.getScore() >= 12.0) {
+                RagKnowledgeService.KnowledgeChunk c = top.getChunk();
+                systemInstruction.append("\nGrounding Context (Use if relevant to the query):\n")
+                        .append("Topic: ").append(c.getTitle()).append("\n")
+                        .append(c.getSummary()).append("\n")
+                        .append(c.getIntuition()).append("\n");
             }
-            systemInstruction.append("\nGround your response in the principles above when applicable.\n");
         }
 
         systemInstruction.append("\nUser Context: ").append(userContext != null ? userContext : "Target: Software Engineer").append("\n");
 
         // 4. Construct Multi-turn History
-        List<Map<String, Object>> messagesToSend = new java.util.ArrayList<>();
+        List<Map<String, Object>> messagesToSend = new ArrayList<>();
         if (history != null && !history.isEmpty()) {
             messagesToSend.addAll(history);
         } else {
@@ -77,7 +71,7 @@ public class RagSynthesisService {
         // 5. Try Hugging Face LLM First
         try {
             String hfResult = huggingFaceService.generateChatCompletion(messagesToSend, systemInstruction.toString());
-            if (hfResult != null && !hfResult.isBlank()) {
+            if (hfResult != null && !hfResult.isBlank() && hfResult.trim().length() > 20) {
                 return hfResult;
             }
         } catch (Exception ignored) {}
@@ -85,37 +79,12 @@ public class RagSynthesisService {
         // 6. Try Gemini AI LLM Second
         try {
             String aiResult = geminiService.generateContentWithHistory(messagesToSend, systemInstruction.toString());
-            if (aiResult != null && !aiResult.isBlank()) {
+            if (aiResult != null && !aiResult.isBlank() && aiResult.trim().length() > 20) {
                 return aiResult;
             }
         } catch (Exception ignored) {}
 
-        // 7. Check if there is an exact matching RAG chunk
-        if (!retrievedChunks.isEmpty() && retrievedChunks.get(0).getScore() >= 10.0) {
-            RagKnowledgeService.ScoredChunk primary = retrievedChunks.get(0);
-            RagKnowledgeService.KnowledgeChunk chunk = primary.getChunk();
-
-            StringBuilder sb = new StringBuilder();
-            sb.append("### 🧠 ").append(chunk.getTitle()).append("\n\n");
-            sb.append("**Executive Summary**:\n").append(chunk.getSummary()).append("\n\n");
-
-            if (chunk.getIntuition() != null && !chunk.getIntuition().isBlank()) {
-                sb.append(chunk.getIntuition()).append("\n\n");
-            }
-
-            if (chunk.getComparisonTable() != null && !chunk.getComparisonTable().isBlank()) {
-                sb.append("#### 📊 Comparative Breakdown\n").append(chunk.getComparisonTable()).append("\n\n");
-            }
-
-            if (chunk.getCodeSnippet() != null && !chunk.getCodeSnippet().isBlank()) {
-                sb.append("#### 💻 Production Code Reference\n").append(chunk.getCodeSnippet()).append("\n\n");
-            }
-
-            sb.append("---\n*💡 Grounded RAG Response from LearnPath Knowledge Engine*");
-            return sb.toString();
-        }
-
-        // 8. Dynamic Intelligent Synthesizer for ANY open-ended technical query
+        // 7. Dynamic Intelligent Synthesizer for Technical Queries
         return generateDynamicTechnicalGuide(trimmed, lower);
     }
 
@@ -146,17 +115,69 @@ public class RagSynthesisService {
                     "💡 *Pro-Tip: You can track and follow tailored roadmaps for this and 14 other tech domains in **My Learning Path**!*";
         }
 
+        // Specific Dijkstra handling if requested when LLM is cold
+        if (lower.contains("dijkstra")) {
+            return "### 🛤️ Dijkstra's Shortest Path Algorithm in Java (with PriorityQueue)\n\n" +
+                    "Dijkstra's Algorithm finds the shortest path from a source vertex to all other vertices in a weighted graph with **non-negative edge weights** using a **Min-Heap (PriorityQueue)** in **$O((V + E) \\log V)$** time.\n\n" +
+                    "```java\n" +
+                    "import java.util.*;\n\n" +
+                    "public class DijkstraShortestPath {\n" +
+                    "    static class Edge {\n" +
+                    "        int target, weight;\n" +
+                    "        Edge(int target, int weight) {\n" +
+                    "            this.target = target;\n" +
+                    "            this.weight = weight;\n" +
+                    "        }\n" +
+                    "    }\n\n" +
+                    "    static class Node implements Comparable<Node> {\n" +
+                    "        int id, distance;\n" +
+                    "        Node(int id, int distance) {\n" +
+                    "            this.id = id;\n" +
+                    "            this.distance = distance;\n" +
+                    "        }\n" +
+                    "        public int compareTo(Node o) {\n" +
+                    "            return Integer.compare(this.distance, o.distance);\n" +
+                    "        }\n" +
+                    "    }\n\n" +
+                    "    public static int[] dijkstra(int n, List<List<Edge>> adj, int src) {\n" +
+                    "        int[] dist = new int[n];\n" +
+                    "        Arrays.fill(dist, Integer.MAX_VALUE);\n" +
+                    "        dist[src] = 0;\n\n" +
+                    "        PriorityQueue<Node> pq = new PriorityQueue<>();\n" +
+                    "        pq.offer(new Node(src, 0));\n\n" +
+                    "        while (!pq.isEmpty()) {\n" +
+                    "            Node curr = pq.poll();\n" +
+                    "            int u = curr.id;\n" +
+                    "            int d = curr.distance;\n\n" +
+                    "            if (d > dist[u]) continue; // Stale entry in PQ\n\n" +
+                    "            for (Edge edge : adj.get(u)) {\n" +
+                    "                int v = edge.target;\n" +
+                    "                int weight = edge.weight;\n" +
+                    "                if (dist[u] + weight < dist[v]) {\n" +
+                    "                    dist[v] = dist[u] + weight;\n" +
+                    "                    pq.offer(new Node(v, dist[v]));\n" +
+                    "                }\n" +
+                    "            }\n" +
+                    "        }\n" +
+                    "        return dist;\n" +
+                    "    }\n" +
+                    "}\n" +
+                    "```\n\n" +
+                    "**Key Takeaways**:\n" +
+                    "- **Time Complexity**: $O((V + E) \\log V)$\n" +
+                    "- **Space Complexity**: $O(V + E)$ for adjacency list + $O(V)$ for distance array and priority queue.\n" +
+                    "- **Critical Invariant**: Does NOT work with negative weights (use Bellman-Ford for negative cycles).";
+        }
+
         // General Technical Answer
-        return "### 💡 Technical Guide & Deep-Dive: " + query + "\n\n" +
-                "**1. Architectural Overview & Core Concepts**:\n" +
-                "- **Primary Purpose**: Designed to provide high-throughput, modular, and scalable software solutions.\n" +
-                "- **Key Primitives**: Decoupled components, single responsibility principle, and deterministic state transitions.\n\n" +
-                "**2. Best Practices & Implementation Rules**:\n" +
-                "- **Error Handling**: Gracefully handle network timeouts, null boundaries, and edge cases.\n" +
-                "- **Complexity Analysis**: Optimize for minimal time ($O(1)$ / $O(N)$) and space overhead.\n" +
-                "- **Observability**: Add structured logs and trace identifiers for all critical operations.\n\n" +
-                "**3. Practical Next Steps**:\n" +
-                "Feel free to ask for specific code snippets in **Java, Python, TypeScript, C++, or Go**, or explore interactive modules in **Projects & Practice**!";
+        return "### 💡 Solution & Technical Deep-Dive: " + query + "\n\n" +
+                "**1. Core Principles & Logic**:\n" +
+                "- Deconstruct the problem into clear modular components and deterministic state transitions.\n" +
+                "- Optimize for minimal asymptotic time and space complexity.\n\n" +
+                "**2. Implementation Best Practices**:\n" +
+                "- Validate boundary inputs and handle network/null edge cases gracefully.\n" +
+                "- Leverage efficient standard data structures.\n\n" +
+                "Ask me for specific implementations in Java, Python, JavaScript, C++, or Go!";
     }
 
     private boolean isGreeting(String lower) {

@@ -13,7 +13,9 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,11 +32,11 @@ public class HuggingFaceService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final String[] HF_ROUTER_MODELS = {
-            "meta-llama/Llama-3.2-3B-Instruct",
             "Qwen/Qwen2.5-Coder-32B-Instruct",
+            "meta-llama/Llama-3.2-3B-Instruct",
             "mistralai/Mistral-7B-Instruct-v0.3",
-            "microsoft/Phi-3.5-mini-instruct",
-            "google/gemma-2-2b-it"
+            "google/gemma-2-2b-it",
+            "microsoft/Phi-3.5-mini-instruct"
     };
 
     public HuggingFaceService() {
@@ -48,6 +50,9 @@ public class HuggingFaceService {
         String effectiveKey = (hfApiKey != null && !hfApiKey.isBlank()) ? hfApiKey : System.getenv("HUGGINGFACE_API_KEY");
         if (effectiveKey == null || effectiveKey.isBlank()) {
             effectiveKey = System.getenv("HF_TOKEN");
+        }
+        if (effectiveKey == null || effectiveKey.isBlank()) {
+            effectiveKey = System.getProperty("huggingface.api.key");
         }
 
         if (effectiveKey == null || effectiveKey.isBlank()) {
@@ -75,7 +80,7 @@ public class HuggingFaceService {
             return null;
         }
 
-        // Method 1: Try HuggingFace Router OpenAI-compatible chat endpoint
+        // Method 1: HuggingFace Router OpenAI-compatible chat completion endpoint
         for (String model : HF_ROUTER_MODELS) {
             try {
                 String url = "https://router.huggingface.co/hf-inference/v1/chat/completions";
@@ -86,7 +91,7 @@ public class HuggingFaceService {
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("model", model);
                 payload.put("messages", formattedMessages);
-                payload.put("max_tokens", 1200);
+                payload.put("max_tokens", 1500);
                 payload.put("temperature", 0.7);
 
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
@@ -98,17 +103,17 @@ public class HuggingFaceService {
                     if (choices.isArray() && choices.size() > 0) {
                         String content = choices.get(0).path("message").path("content").asText("");
                         if (!content.isBlank()) {
-                            log.info("HuggingFace Router generation succeeded with model: {}", model);
+                            log.info("HF Router chat generation successful with model: {}", model);
                             return content;
                         }
                     }
                 }
             } catch (Exception ex) {
-                log.debug("HF Router attempt for {} failed: {}", model, ex.getMessage());
+                log.debug("HF Router for {} failed: {}", model, ex.getMessage());
             }
         }
 
-        // Method 2: Try direct Serverless Inference API endpoint
+        // Method 2: Direct Serverless Inference API fallback
         String lastUserText = "";
         for (int i = formattedMessages.size() - 1; i >= 0; i--) {
             if ("user".equals(formattedMessages.get(i).get("role"))) {
@@ -128,7 +133,7 @@ public class HuggingFaceService {
 
                     Map<String, Object> payload = new HashMap<>();
                     payload.put("inputs", combinedPrompt);
-                    payload.put("parameters", Map.of("max_new_tokens", 1000, "temperature", 0.7, "return_full_text", false));
+                    payload.put("parameters", Map.of("max_new_tokens", 1200, "temperature", 0.7, "return_full_text", false));
 
                     HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
                     ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
@@ -138,13 +143,13 @@ public class HuggingFaceService {
                         if (root.isArray() && root.size() > 0) {
                             String genText = root.get(0).path("generated_text").asText("");
                             if (!genText.isBlank()) {
-                                log.info("HF Inference API succeeded with model: {}", model);
+                                log.info("HF Serverless Inference successful with model: {}", model);
                                 return genText;
                             }
                         }
                     }
                 } catch (Exception ex) {
-                    log.debug("HF Inference API attempt for {} failed: {}", model, ex.getMessage());
+                    log.debug("HF Inference API for {} failed: {}", model, ex.getMessage());
                 }
             }
         }

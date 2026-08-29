@@ -1,18 +1,86 @@
 function ChatbotView({ user, setActiveTab }) {
   const API_BASE = window.API_BASE || 'https://hclproject-cbmh.onrender.com';
 
-  const generateSmartFallback = (query) => {
-    const lower = (query || '').toLowerCase();
-    
-    if (lower.includes('javascript') && lower.includes('react')) {
-      return `### ⚡ Core Differences: JavaScript vs. React.js
+  const generateDynamicPromptGuide = (query) => {
+    const lower = (query || '').toLowerCase().trim();
+    const cleanTopic = query.replace(/(?i)(what is|how to learn|roadmap for|explain|difference between|tell me about|what should be my roadmap for|roadmap|\?)/g, '').trim() || query;
 
-| Feature | Vanilla JavaScript (ECMAScript) | React.js |
+    if (lower.includes('langchain')) {
+      return `### 🦜🔗 Production LangChain & AI Agent Mastery Roadmap
+
+Here is a structured, production-ready 4-Week Roadmap to master **LangChain**, Vector Databases, RAG architectures, and Autonomous AI Agents:
+
+#### 📅 Week 1: Core Fundamentals & LCEL (LangChain Expression Language)
+- **Prompt Engineering**: \`ChatPromptTemplate\`, System vs Human messages, Few-Shot formatting.
+- **Output Parsers**: Enforcing strict JSON schemas using \`PydanticOutputParser\` and \`StrOutputParser\`.
+- **LCEL Pipe Syntax**: Composing pipelines: \`chain = prompt | model | parser\`.
+- 🛠️ **Project**: *Interactive Code Explainer & Automated Unit-Test Generator*.
+
+#### 📅 Week 2: Document Processing, Embeddings & Vector Databases (RAG)
+- **Document Loaders & Chunking**: \`RecursiveCharacterTextSplitter\` with token overlap invariants.
+- **Embeddings & Vector Stores**: OpenAI/HuggingFace embeddings with **FAISS**, **ChromaDB**, or **Pinecone**.
+- **Retrievers**: Multi-Query Retriever, Contextual Compression, and BM25 + Vector Hybrid Search.
+- 🛠️ **Project**: *Enterprise PDF Documentation Chatbot with Exact Page & Paragraph Citations*.
+
+#### 📅 Week 3: Memory, Custom Tools & ReAct Agents
+- **Stateful Memory**: \`ConversationBufferWindowMemory\`, SQLite-backed session persistence.
+- **Custom Tool Calling**: Using \`@tool\` decorator with Pydantic validation schemas.
+- **ReAct Agents**: \`create_tool_calling_agent\` combining Reason + Act loop for dynamic execution.
+- 🛠️ **Project**: *Autonomous SQL Database Query & Chart Plotting Agent*.
+
+#### 📅 Week 4: LangGraph Multi-Agent Workflows & Production Evaluation
+- **LangGraph State Graphs**: Multi-agent nodes, conditional edge routing, human-in-the-loop approvals.
+- **Observability & Tracing**: Integrating **LangSmith** and **Ragas** framework for latency and hallucination metrics.
+- 🚀 **Capstone**: *Autonomous Software Architecture Reviewer & Code Generator*.
+
+\`\`\`python
+# Production LCEL + FAISS Vector Store Pipeline
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+
+# 1. Initialize Embeddings & Vector Store
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+vectorstore = FAISS.from_texts(["LangChain is an enterprise framework for building LLM applications."], embeddings)
+retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
+
+# 2. Define LCEL Prompt & Chain
+prompt = ChatPromptTemplate.from_template("Answer question using context:\\nContext: {context}\\nQuestion: {question}")
+# chain = ({"context": retriever, "question": lambda x: x} | prompt | model | StrOutputParser())
+\`\`\``;
+    }
+
+    if (lower.includes('roadmap') || lower.includes('how to learn')) {
+      return `### 🗺️ Master Engineering Roadmap: ${cleanTopic.toUpperCase()}
+
+Here is a structured, production-ready step-by-step roadmap to master **${cleanTopic}** from fundamentals to enterprise scale:
+
+#### 📅 Phase 1: Core Fundamentals & Environment Setup (Weeks 1–2)
+- **Syntax, Primitives & Lifecycle**: Understand core runtime semantics, memory models, and standard libraries.
+- **Tooling & IDE Setup**: Package managers, debugging profilers, and linting/formatting tools.
+- **Hands-on Practice**: Implement core algorithms and small standalone CLI utilities.
+
+#### 📅 Phase 2: Architecture, State & API Integrations (Weeks 3–4)
+- **Data Layer & Async Execution**: Asynchronous streams, connection pooling, and resilient error boundaries.
+- **REST & Microservices**: Building clean modular endpoints with input validation and authentication.
+- **Automated Testing**: Unit tests, mocking dependencies, and integration test suites.
+
+#### 📅 Phase 3: Advanced Optimization, Security & System Design (Weeks 5–6)
+- **High-Throughput Scaling**: Caching strategies (Redis), concurrency patterns, and query indexing.
+- **Security Hardening**: Token authentication, secret vaults, and rate limiting.
+
+#### 📅 Phase 4: Production Deployment & Observability (Weeks 7–8)
+- **Containerization & CI/CD**: Multi-stage Dockerfiles and automated pipeline deployment.
+- **Monitoring**: Structured logging, Prometheus metrics, and distributed APM tracing.
+- 🚀 **Capstone Project**: Build an end-to-end production application using ${cleanTopic}!`;
+    }
+
+    if (lower.includes('difference') || lower.includes(' vs ')) {
+      return `### ⚡ Technical Comparison: ${cleanTopic}
+
+| Evaluation Dimension | Option A | Option B |
 | :--- | :--- | :--- |
-| **Paradigm** | Core programming language (Imperative DOM manipulation) | Declarative UI Library for building component hierarchies |
-| **DOM Updates** | Directly mutates the Real DOM (\`document.getElementById\`), causing expensive browser reflows | Uses an in-memory **Virtual DOM (VDOM)** with Fiber reconciliation to batch minimal DOM patches |
-| **State Management** | Global variables, manual event listeners, and bespoke closures | Reactive State (\`useState\`, \`useReducer\`, Redux, Zustand) triggering automatic UI synchronization |
-| **Architecture** | Script-based or vanilla MVC structure | Reusable, composable component-driven architecture with unidirectional data flow (Props down, Events up) |
 | **Ecosystem & Tools** | Native browser execution without bundlers | Requires build tools (Vite, Webpack, Babel/SWC) for JSX compilation |
 
 #### 💡 Practical Code Comparison:
@@ -381,23 +449,7 @@ public class Trie {
     }));
 
     try {
-      const res = await fetch(`${API_BASE}/api/chatbot/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: trimmedQuery,
-          history: historyPayload,
-          userContext: user ? `User: ${user.fullName || user.email}` : "Target: Software & AI Engineer"
-        })
-      });
-
-      let reply = "";
-      if (res.ok) {
-        const data = await res.json();
-        reply = data.response || data.reply || generateSmartFallback(trimmedQuery);
-      } else {
-        reply = generateSmartFallback(trimmedQuery);
-      }
+      const reply = await requestChatGptAnswer(trimmedQuery, historyPayload);
 
       const aiMsg = {
         role: 'ai',
@@ -405,34 +457,42 @@ public class Trie {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
-      setThreads(prev => prev.map(t => {
-        if (t.id === activeThreadId) {
-          return {
-            ...t,
-            updatedAt: new Date().toISOString(),
-            messages: [...updatedMsgs, aiMsg]
-          };
-        }
-        return t;
-      }));
+      setThreads(prev => {
+        const next = prev.map(t => {
+          if (t.id === activeThreadId) {
+            return {
+              ...t,
+              updatedAt: new Date().toISOString(),
+              messages: [...updatedMsgs, aiMsg]
+            };
+          }
+          return t;
+        });
+        try { localStorage.setItem(currentStorageKey, JSON.stringify(next)); } catch (e) {}
+        return next;
+      });
 
     } catch (e) {
       const errorMsg = {
         role: 'ai',
-        text: generateSmartFallback(trimmedQuery),
+        text: generateDynamicPromptGuide(trimmedQuery),
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
-      setThreads(prev => prev.map(t => {
-        if (t.id === activeThreadId) {
-          return {
-            ...t,
-            updatedAt: new Date().toISOString(),
-            messages: [...updatedMsgs, errorMsg]
-          };
-        }
-        return t;
-      }));
+      setThreads(prev => {
+        const next = prev.map(t => {
+          if (t.id === activeThreadId) {
+            return {
+              ...t,
+              updatedAt: new Date().toISOString(),
+              messages: [...updatedMsgs, errorMsg]
+            };
+          }
+          return t;
+        });
+        try { localStorage.setItem(currentStorageKey, JSON.stringify(next)); } catch (err) {}
+        return next;
+      });
     } finally {
       setIsLoading(false);
     }
