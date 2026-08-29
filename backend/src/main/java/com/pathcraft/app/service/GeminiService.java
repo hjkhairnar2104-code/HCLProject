@@ -18,6 +18,8 @@ public class GeminiService {
     @Value("${gemini.api.key:${GEMINI_API_KEY:AIzaSyCKAbcdq_NZNTQ57QYey4FjccTjhClXl-w}}")
     private String geminiApiKey;
 
+    private static final String WORKING_KEY = "AIzaSyCKAbcdq_NZNTQ57QYey4FjccTjhClXl-w";
+
     private final RestTemplate restTemplate;
 
     private static final String[] CANDIDATE_MODELS = {
@@ -25,15 +27,25 @@ public class GeminiService {
             "gemini-flash-latest",
             "gemini-2.5-pro",
             "gemini-pro-latest",
-            "gemini-2.5-flash-lite",
-            "gemini-2.5-flash-preview-tts"
+            "gemini-2.5-flash-lite"
     };
 
     public GeminiService() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(5000);
-        factory.setReadTimeout(10000);
+        factory.setConnectTimeout(8000);
+        factory.setReadTimeout(20000);
         this.restTemplate = new RestTemplate(factory);
+    }
+
+    private String getEffectiveKey() {
+        if (geminiApiKey != null && !geminiApiKey.isBlank() && !geminiApiKey.startsWith("AIzaSyD9")) {
+            return geminiApiKey.trim();
+        }
+        String envKey = System.getenv("GEMINI_API_KEY");
+        if (envKey != null && !envKey.isBlank() && !envKey.startsWith("AIzaSyD9")) {
+            return envKey.trim();
+        }
+        return WORKING_KEY;
     }
 
     public String generateContent(String prompt) {
@@ -41,7 +53,8 @@ public class GeminiService {
     }
 
     public String generateContentWithHistory(List<Map<String, Object>> history, String systemInstruction) {
-        if (geminiApiKey == null || geminiApiKey.isBlank() || history == null || history.isEmpty()) {
+        String activeKey = getEffectiveKey();
+        if (activeKey == null || activeKey.isBlank() || history == null || history.isEmpty()) {
             return "";
         }
 
@@ -75,7 +88,7 @@ public class GeminiService {
 
         for (String model : CANDIDATE_MODELS) {
             try {
-                String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + geminiApiKey;
+                String url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + activeKey;
                 ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
                 Map body = response.getBody();
                 if (body != null && body.containsKey("candidates")) {

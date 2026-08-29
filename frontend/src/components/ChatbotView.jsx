@@ -208,7 +208,7 @@ public class Trie {
       if (res.ok) {
         const data = await res.json();
         const text = data.response || data.reply;
-        if (text && text.trim().length > 0) {
+        if (text && text.trim().length > 0 && !text.includes("Technical Deep-Dive:") && !text.includes("Master Roadmap:")) {
           return text;
         }
       }
