@@ -15,10 +15,8 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-    @Value("${gemini.api.key:${GEMINI_API_KEY:AIzaSyCKAbcdq_NZNTQ57QYey4FjccTjhClXl-w}}")
+    @Value("${gemini.api.key:${GEMINI_API_KEY:}}")
     private String geminiApiKey;
-
-    private static final String WORKING_KEY = "AIzaSyCKAbcdq_NZNTQ57QYey4FjccTjhClXl-w";
 
     private final RestTemplate restTemplate;
 
@@ -27,25 +25,26 @@ public class GeminiService {
             "gemini-flash-latest",
             "gemini-2.5-pro",
             "gemini-pro-latest",
-            "gemini-2.5-flash-lite"
+            "gemini-2.5-flash-lite",
+            "gemini-1.5-flash"
     };
 
     public GeminiService() {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(8000);
-        factory.setReadTimeout(20000);
+        factory.setReadTimeout(25000);
         this.restTemplate = new RestTemplate(factory);
     }
 
     private String getEffectiveKey() {
-        if (geminiApiKey != null && !geminiApiKey.isBlank() && !geminiApiKey.startsWith("AIzaSyD9")) {
-            return geminiApiKey.trim();
-        }
         String envKey = System.getenv("GEMINI_API_KEY");
-        if (envKey != null && !envKey.isBlank() && !envKey.startsWith("AIzaSyD9")) {
+        if (envKey != null && !envKey.isBlank()) {
             return envKey.trim();
         }
-        return WORKING_KEY;
+        if (geminiApiKey != null && !geminiApiKey.isBlank()) {
+            return geminiApiKey.trim();
+        }
+        return "";
     }
 
     public String generateContent(String prompt) {
