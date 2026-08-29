@@ -3,7 +3,7 @@ function ChatbotView({ user, setActiveTab }) {
 
   const generateDynamicPromptGuide = (query) => {
     const lower = (query || '').toLowerCase().trim();
-    const cleanTopic = query.replace(/(?i)(what is|how to learn|roadmap for|explain|difference between|tell me about|what should be my roadmap for|roadmap|\?)/g, '').trim() || query;
+    const cleanTopic = (query || '').replace(/(what is|how to learn|roadmap for|explain|difference between|tell me about|what should be my roadmap for|roadmap|\?)/gi, '').trim() || (query || 'Topic');
 
     if (lower.includes('langchain')) {
       return `### 🦜🔗 Production LangChain & AI Agent Mastery Roadmap
