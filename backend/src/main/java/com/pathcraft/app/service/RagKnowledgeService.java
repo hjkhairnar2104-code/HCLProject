@@ -35,6 +35,18 @@ public class RagKnowledgeService {
             this.edgeCases = edgeCases;
         }
 
+        public KnowledgeChunk(String id, String title, String domain, List<String> keywords,
+                              String summary, String intuition, String comparisonTable,
+                              String codeSnippet, String complexity) {
+            this(id, title, domain, keywords, summary, intuition, comparisonTable, codeSnippet, complexity, "");
+        }
+
+        public KnowledgeChunk(String id, String title, String domain, List<String> keywords,
+                              String summary, String intuition, String comparisonTable,
+                              String codeSnippet) {
+            this(id, title, domain, keywords, summary, intuition, comparisonTable, codeSnippet, "", "");
+        }
+
         public String getId() { return id; }
         public String getTitle() { return title; }
         public String getDomain() { return domain; }
