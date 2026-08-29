@@ -64,6 +64,58 @@ public class TwoSum {
 - **Space Complexity**: **$O(N)$** — The Hash Map stores at most $N$ elements.`;
     }
 
+    if (lower.includes('coin change')) {
+      return `### 🪙 Coin Change Problem — Complete Dynamic Programming Solution (LeetCode #322)
+
+#### 📝 Problem Statement
+You are given an integer array \`coins\` representing coins of different denominations and an integer \`amount\` representing a total amount of money. Return the **fewest number of coins** that you need to make up that amount. If that amount of money cannot be made up by any combination of the coins, return \`-1\`.
+
+---
+
+#### 🧠 Dynamic Programming Intuition (Bottom-Up 1D DP)
+Let \`dp[i]\` be the minimum coins needed to make amount \`i\`.
+- **Base Case**: \`dp[0] = 0\` (0 coins to make amount 0).
+- Initialize \`dp[1...amount] = amount + 1\` (represents infinity).
+- **Recurrence Relation**: For each coin \`c\` in \`coins\`:
+  $$\\text{dp}[i] = \\min(\\text{dp}[i], 1 + \\text{dp}[i - c]) \\quad \\text{for } i \\ge c$$
+
+---
+
+#### 💻 Optimal Java Solution ($O(\\text{amount} \\times N)$)
+
+\`\`\`java
+import java.util.Arrays;
+
+public class CoinChange {
+    public int coinChange(int[] coins, int amount) {
+        if (amount < 0) return -1;
+        if (amount == 0) return 0;
+
+        int max = amount + 1;
+        int[] dp = new int[amount + 1];
+        Arrays.fill(dp, max);
+        dp[0] = 0; // 0 coins needed for amount 0
+
+        for (int i = 1; i <= amount; i++) {
+            for (int coin : coins) {
+                if (i >= coin) {
+                    dp[i] = Math.min(dp[i], dp[i - coin] + 1);
+                }
+            }
+        }
+
+        return dp[amount] > amount ? -1 : dp[amount];
+    }
+}
+\`\`\`
+
+---
+
+#### 📊 Complexity Analysis
+- **Time Complexity**: **$O(\\text{amount} \\times N)$** where $N$ is the number of coin denominations.
+- **Space Complexity**: **$O(\\text{amount})$** for the 1D DP table.`;
+    }
+
     if (lower.includes('machine learning') || lower.includes('ml roadmap')) {
       return `### 🤖 Comprehensive Machine Learning Engineering Roadmap (Zero to Production)
 
@@ -309,11 +361,69 @@ public class Trie {
   };
 
   const requestChatGptAnswer = async (query, historyPayload) => {
-    // 1. Send request to Backend API (which calls Gemini 2.5 Flash on Render)
+    // 1. Check for User-configured API Key in LocalStorage or state
+    const activeGeminiKey = userApiKey || localStorage.getItem('learnpath_user_gemini_key') || '';
+
+    if (activeGeminiKey && activeGeminiKey.trim()) {
+      const candidateModels = [
+        'gemini-2.5-flash',
+        'gemini-flash-latest',
+        'gemini-2.5-pro',
+        'gemini-1.5-flash'
+      ];
+
+      // Format clean conversation turns
+      const contents = [];
+      if (historyPayload && historyPayload.length > 0) {
+        historyPayload.slice(-6).forEach(m => {
+          const text = (m.text || m.content || '').trim();
+          if (text) {
+            const role = (m.role === 'ai' || m.role === 'assistant' || m.role === 'model') ? 'model' : 'user';
+            if (contents.length === 0 || contents[contents.length - 1].role !== role) {
+              contents.push({ role, parts: [{ text }] });
+            }
+          }
+        });
+      }
+
+      if (contents.length === 0 || contents[contents.length - 1].role !== 'user') {
+        contents.push({ role: 'user', parts: [{ text: query }] });
+      }
+
+      for (const model of candidateModels) {
+        try {
+          const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeGeminiKey.trim()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: contents
+            })
+          });
+
+          if (geminiRes.ok) {
+            const geminiData = await geminiRes.json();
+            const replyText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (replyText && replyText.trim().length > 0) {
+              return replyText;
+            }
+          } else {
+            const errData = await geminiRes.json().catch(() => ({}));
+            console.warn(`Gemini model ${model} error:`, errData);
+          }
+        } catch (mErr) {
+          console.warn(`Gemini fetch error on model ${model}:`, mErr);
+        }
+      }
+    }
+
+    // 2. Query Spring Boot Backend on Render with key header
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (activeGeminiKey) headers['X-Gemini-Key'] = activeGeminiKey;
+
       const res = await fetch(`${API_BASE}/api/chatbot/ask`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: headers,
         body: JSON.stringify({
           message: query,
           history: historyPayload,
@@ -324,7 +434,7 @@ public class Trie {
       if (res.ok) {
         const data = await res.json();
         const text = data.response || data.reply;
-        if (text && text.trim().length > 0 && !text.includes("Technical Deep-Dive:") && !text.includes("Master Roadmap:")) {
+        if (text && text.trim().length > 0 && !text.includes("Technical Deep-Dive:") && !text.includes("Master Roadmap: GIVE ME")) {
           return text;
         }
       }
@@ -332,31 +442,21 @@ public class Trie {
       console.warn("Backend API request error:", e);
     }
 
-    // 2. Direct client-side Gemini 2.5 Flash call as immediate fallback
-    try {
-      const geminiKey = "AIzaSyCKAbcdq_NZNTQ57QYey4FjccTjhClXl-w";
-      const contents = (historyPayload || []).map(m => ({
-        role: m.role === 'assistant' || m.role === 'ai' ? 'model' : 'user',
-        parts: [{ text: m.text || m.content || '' }]
-      }));
+    // 3. Fallback prompt if no key is configured yet
+    if (!activeGeminiKey) {
+      return `### 🔑 Connect Your Gemini API Key for Unlimited Real-Time AI
 
-      const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: contents.length > 0 ? contents : [{ role: 'user', parts: [{ text: query }] }]
-        })
-      });
+To get **real-time ChatGPT-grade responses** for any programming question, algorithm, or roadmap, please connect your free Google Gemini API key:
 
-      if (geminiRes.ok) {
-        const geminiData = await geminiRes.json();
-        const replyText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (replyText && replyText.trim().length > 0) {
-          return replyText;
-        }
-      }
-    } catch (gErr) {
-      console.warn("Direct client Gemini call error:", gErr);
+1. Click the **"🔑 Gemini API Key"** button at the top right of this chat.
+2. Get a 100% free key from [Google AI Studio (aistudio.google.com)](https://aistudio.google.com/app/apikey).
+3. Paste your key and click **Save**.
+
+*Your key is saved locally in your browser and is never stored in public repositories.*
+
+---
+
+` + generateDynamicPromptGuide(query);
     }
 
     return generateDynamicPromptGuide(query);
@@ -385,6 +485,13 @@ public class Trie {
 
   const currentStorageKey = getChatStorageKey(user);
   const activeKeyRef = React.useRef(currentStorageKey);
+
+  // Gemini API Key State (Browser-persisted)
+  const [userApiKey, setUserApiKey] = React.useState(() => {
+    return localStorage.getItem('learnpath_user_gemini_key') || '';
+  });
+  const [showKeyModal, setShowKeyModal] = React.useState(false);
+  const [tempApiKeyInput, setTempApiKeyInput] = React.useState('');
 
   // 1. Thread & History State Management (User-Scoped & Isolated)
   const [threads, setThreads] = React.useState(() => {
@@ -1010,6 +1117,29 @@ public class Trie {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
             <button
+              onClick={() => {
+                setTempApiKeyInput(userApiKey || '');
+                setShowKeyModal(true);
+              }}
+              className="btn-secondary"
+              style={{
+                fontSize: '0.75rem',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: userApiKey ? '#ecfdf5' : '#f8fafc',
+                border: userApiKey ? '1px solid #10b981' : '1px solid #cbd5e1',
+                color: userApiKey ? '#047857' : '#475569',
+                fontWeight: 600
+              }}
+              title="Configure your Google Gemini API Key"
+            >
+              <span>🔑</span>
+              <span>{userApiKey ? 'Gemini AI Active' : 'Connect Gemini API Key'}</span>
+            </button>
+            <button
               onClick={handleExportChat}
               className="btn-secondary"
               style={{ fontSize: '0.75rem', padding: '6px 12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
@@ -1254,6 +1384,128 @@ public class Trie {
         </div>
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* GEMINI API KEY CONFIGURATION MODAL                                        */}
+      {/* ========================================================================= */}
+      {showKeyModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '16px'
+          }}
+          onClick={() => setShowKeyModal(false)}
+        >
+          <div
+            className="saas-card"
+            style={{
+              maxWidth: '520px',
+              width: '100%',
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '24px',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
+              border: '1px solid #e2e8f0'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem' }}>🔑</span>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a' }}>
+                  Connect Google Gemini API Key
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowKeyModal(false)}
+                style={{ background: 'transparent', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: '#64748b' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.5, marginBottom: '16px' }}>
+              To enable <strong>instant, real-time AI responses</strong> for any programming question, custom algorithm, or roadmap, enter your free Google Gemini API key:
+            </p>
+
+            <div style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '16px', fontSize: '0.82rem', color: '#334155' }}>
+              💡 <strong>Get a free key in 10 seconds:</strong><br />
+              1. Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#4f46e5', fontWeight: 700, textDecoration: 'underline' }}>Google AI Studio (aistudio.google.com)</a>.<br />
+              2. Click <strong>Create API Key</strong>.<br />
+              3. Paste the key below and click Save.
+            </div>
+
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                Gemini API Key
+              </label>
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                value={tempApiKeyInput}
+                onChange={e => setTempApiKeyInput(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #cbd5e1',
+                  fontSize: '0.9rem',
+                  outline: 'none',
+                  boxSizing: 'border-box'
+                }}
+              />
+              <span style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px', display: 'block' }}>
+                🔒 Your key is saved in your browser (LocalStorage) and will never be exposed in git repositories.
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              {userApiKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('learnpath_user_gemini_key');
+                    setUserApiKey('');
+                    setShowKeyModal(false);
+                  }}
+                  className="btn-subtle"
+                  style={{ color: '#ef4444' }}
+                >
+                  Disconnect Key
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowKeyModal(false)}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const cleaned = tempApiKeyInput.trim();
+                  if (cleaned) {
+                    localStorage.setItem('learnpath_user_gemini_key', cleaned);
+                    setUserApiKey(cleaned);
+                  }
+                  setShowKeyModal(false);
+                }}
+                className="btn-primary"
+              >
+                Save & Connect Key
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
