@@ -1,5 +1,128 @@
-// LearnPath AI — Full ChatGPT-Style Conversational Engineering Studio with Threads & Multi-Turn History
 function ChatbotView({ user, setActiveTab }) {
+  const API_BASE = window.API_BASE || 'https://hclproject-cbmh.onrender.com';
+
+  const generateSmartFallback = (query) => {
+    const lower = (query || '').toLowerCase();
+    
+    if (lower.includes('javascript') && lower.includes('react')) {
+      return `### ⚡ Core Differences: JavaScript vs. React.js
+
+| Feature | Vanilla JavaScript (ECMAScript) | React.js |
+| :--- | :--- | :--- |
+| **Paradigm** | Core programming language (Imperative DOM manipulation) | Declarative UI Library for building component hierarchies |
+| **DOM Updates** | Directly mutates the Real DOM (\`document.getElementById\`), causing expensive browser reflows | Uses an in-memory **Virtual DOM (VDOM)** with Fiber reconciliation to batch minimal DOM patches |
+| **State Management** | Global variables, manual event listeners, and bespoke closures | Reactive State (\`useState\`, \`useReducer\`, Redux, Zustand) triggering automatic UI synchronization |
+| **Architecture** | Script-based or vanilla MVC structure | Reusable, composable component-driven architecture with unidirectional data flow (Props down, Events up) |
+| **Ecosystem & Tools** | Native browser execution without bundlers | Requires build tools (Vite, Webpack, Babel/SWC) for JSX compilation |
+
+#### 💡 Practical Code Comparison:
+
+**1. Vanilla JavaScript (Imperative)**:
+\`\`\`javascript
+const button = document.createElement('button');
+let count = 0;
+button.innerText = 'Clicks: ' + count;
+button.addEventListener('click', () => {
+  count++;
+  button.innerText = 'Clicks: ' + count; // Manual DOM update
+});
+document.body.appendChild(button);
+\`\`\`
+
+**2. React.js (Declarative)**:
+\`\`\`jsx
+function Counter() {
+  const [count, setCount] = React.useState(0);
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      Clicks: {count}
+    </button>
+  ); // React automatically calculates VDOM diff and updates only the text node!
+}
+\`\`\`
+
+**Summary**: JavaScript is the foundational language of the web; React is an abstraction built on top of JavaScript to solve complex, stateful, and interactive user interfaces at scale.`;
+    }
+
+    if (lower.includes('trie')) {
+      return `### 🌲 Trie (Prefix Tree) Complete Guide
+
+A **Trie** is a specialized tree structure where nodes represent character keys, enabling **$O(L)$ search, insert, and prefix matching** regardless of the total number of items $N$ in the dictionary ($L$ = word length).
+
+\`\`\`java
+class TrieNode {
+    TrieNode[] children = new TrieNode[26];
+    boolean isEndOfWord = false;
+}
+
+public class Trie {
+    private final TrieNode root = new TrieNode();
+
+    public void insert(String word) {
+        TrieNode curr = root;
+        for (char c : word.toCharArray()) {
+            int idx = c - 'a';
+            if (curr.children[idx] == null) curr.children[idx] = new TrieNode();
+            curr = curr.children[idx];
+        }
+        curr.isEndOfWord = true;
+    }
+
+    public boolean search(String word) {
+        TrieNode node = find(word);
+        return node != null && node.isEndOfWord;
+    }
+
+    public boolean startsWith(String prefix) {
+        return find(prefix) != null;
+    }
+
+    private TrieNode find(String s) {
+        TrieNode curr = root;
+        for (char c : s.toCharArray()) {
+            int idx = c - 'a';
+            if (curr.children[idx] == null) return null;
+            curr = curr.children[idx];
+        }
+        return curr;
+    }
+}
+\`\`\`
+
+- **Time Complexity**: Insert $O(L)$, Search $O(L)$, Prefix $O(L)$.
+- **Interview Applications**: Autocomplete, Spell Checkers, Longest Common Prefix, IP Routing.`;
+    }
+
+    if (lower.includes('kafka') || lower.includes('system design') || lower.includes('redis')) {
+      return `### 🏗️ High-Scale Distributed System Architecture
+
+1. **Distributed Caching (Redis)**:
+   - **Cache-Aside**: Query Redis &rarr; on cache miss, query Database &rarr; write back to Redis with TTL.
+   - **Write-Through**: Application writes to cache, which synchronously persists to DB.
+   - **Write-Back**: Write to Redis immediately, asynchronously batch flushes to DB.
+
+2. **Event Streaming (Apache Kafka)**:
+   - **Partitions**: Unit of parallelism and strict per-key ordering.
+   - **Consumer Groups**: Load balances partition reads across multiple consumer instances.
+   - **ISR (In-Sync Replicas)**: Guarantees zero data loss with \`acks=all\`.
+
+3. **Database Sharding**:
+   - Uses **Consistent Hashing** with virtual nodes to evenly distribute keys across partitions with minimal data movement during node resizing.`;
+    }
+
+    return `### 💡 Technical Guide: ${query}
+
+1. **Core Concept & Architecture**:
+   - Deconstruct the problem into modular components with clear state invariants.
+   - Identify asymptotic time ($O(1)$ vs $O(N)$ vs $O(N \\log N)$) and space trade-offs.
+
+2. **Best Practices**:
+   - Ensure clean error handling, boundary validation, and immutable data flow.
+   - Leverage dedicated data structures (HashMaps, Min-Heaps, Segment Trees) for performance bottlenecks.
+
+3. **Interactive Practice**:
+   - You can test and benchmark this concept directly in **My Learning Path** and **Algo Visualizer**!`;
+  };
   // Helper to isolate chat threads per user
   const getChatStorageKey = (u) => {
     if (u && u.email) return `learnpath_chat_threads_${u.email.toLowerCase().trim()}`;
@@ -272,9 +395,9 @@ function ChatbotView({ user, setActiveTab }) {
       let reply = "";
       if (res.ok) {
         const data = await res.json();
-        reply = data.response || data.reply || "I've analyzed your question. Let me know if you need deeper code samples or complexity proofs.";
+        reply = data.response || data.reply || generateSmartFallback(trimmedQuery);
       } else {
-        reply = "Break your problem down into clear state invariants, evaluate time/space complexity tradeoffs, and check edge cases before writing implementation code.";
+        reply = generateSmartFallback(trimmedQuery);
       }
 
       const aiMsg = {
@@ -283,25 +406,21 @@ function ChatbotView({ user, setActiveTab }) {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 
-      setThreads(prev => {
-        const next = prev.map(t => {
-          if (t.id === activeThreadId) {
-            return {
-              ...t,
-              updatedAt: new Date().toISOString(),
-              messages: [...updatedMsgs, aiMsg]
-            };
-          }
-          return t;
-        });
-        try { localStorage.setItem(currentStorageKey, JSON.stringify(next)); } catch (e) {}
-        return next;
-      });
+      setThreads(prev => prev.map(t => {
+        if (t.id === activeThreadId) {
+          return {
+            ...t,
+            updatedAt: new Date().toISOString(),
+            messages: [...updatedMsgs, aiMsg]
+          };
+        }
+        return t;
+      }));
 
     } catch (e) {
       const errorMsg = {
         role: 'ai',
-        text: "Always consider asymptotic scaling ($O(1)$ vs $O(N)$) and handle network timeouts or edge cases gracefully. Feel free to retry!",
+        text: generateSmartFallback(trimmedQuery),
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
 

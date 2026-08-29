@@ -11,10 +11,14 @@ public class RagSynthesisService {
 
     private final RagKnowledgeService knowledgeService;
     private final GeminiService geminiService;
+    private final HuggingFaceService huggingFaceService;
 
-    public RagSynthesisService(RagKnowledgeService knowledgeService, GeminiService geminiService) {
+    public RagSynthesisService(RagKnowledgeService knowledgeService,
+                               GeminiService geminiService,
+                               HuggingFaceService huggingFaceService) {
         this.knowledgeService = knowledgeService;
         this.geminiService = geminiService;
+        this.huggingFaceService = huggingFaceService;
     }
 
     public String synthesize(String userQuery, String userContext) {
@@ -70,7 +74,19 @@ public class RagSynthesisService {
             messagesToSend.add(Map.of("role", "user", "text", userQuery));
         }
 
-        // 5. Call Live Gemini AI Service with Multi-Turn Memory
+        // 5. Try Hugging Face LLM Service First
+        try {
+            String hfResult = huggingFaceService.generateChatCompletion(messagesToSend, systemInstruction.toString());
+            if (hfResult != null && !hfResult.isBlank()) {
+                if (!retrievedChunks.isEmpty()) {
+                    RagKnowledgeService.ScoredChunk topMatch = retrievedChunks.get(0);
+                    return hfResult + "\n\n---\n*⚡ Powered by HuggingFace LLM • Grounded with LearnPath Knowledge Store (" + topMatch.getChunk().getDomain() + ")*";
+                }
+                return hfResult;
+            }
+        } catch (Exception ignored) {}
+
+        // 6. Fallback to Gemini AI Service
         try {
             String aiResult = geminiService.generateContentWithHistory(messagesToSend, systemInstruction.toString());
             if (aiResult != null && !aiResult.isBlank()) {
@@ -80,11 +96,9 @@ public class RagSynthesisService {
                 }
                 return aiResult;
             }
-        } catch (Exception ignored) {
-            // Fallback to local RAG knowledge synthesis if network or rate limit issues occur
-        }
+        } catch (Exception ignored) {}
 
-        // 4. Deterministic Local RAG Fallback if Gemini AI is temporarily unavailable
+        // 7. Grounded Local RAG Knowledge Synthesis Fallback
         if (!retrievedChunks.isEmpty()) {
             RagKnowledgeService.ScoredChunk primary = retrievedChunks.get(0);
             RagKnowledgeService.KnowledgeChunk chunk = primary.getChunk();
@@ -98,44 +112,31 @@ public class RagSynthesisService {
             }
 
             if (chunk.getComparisonTable() != null && !chunk.getComparisonTable().isBlank()) {
-                sb.append("#### ⚖️ Architectural Comparison\n\n");
-                sb.append(chunk.getComparisonTable()).append("\n\n");
+                sb.append("#### 📊 Comparative Breakdown\n").append(chunk.getComparisonTable()).append("\n\n");
             }
 
             if (chunk.getCodeSnippet() != null && !chunk.getCodeSnippet().isBlank()) {
-                sb.append("#### 💻 Production Code Implementation\n\n");
-                sb.append(chunk.getCodeSnippet()).append("\n\n");
+                sb.append("#### 💻 Production Code Reference\n").append(chunk.getCodeSnippet()).append("\n\n");
             }
 
-            if (chunk.getComplexity() != null && !chunk.getComplexity().isBlank()) {
-                sb.append("#### 📊 Asymptotic Complexity & Performance\n\n");
-                sb.append(chunk.getComplexity()).append("\n\n");
-            }
+            sb.append("---\n*💡 Grounded RAG Response from LearnPath Knowledge Engine (Similarity: ")
+              .append(String.format("%.1f", primary.getScore() * 100)).append("%)*");
 
-            if (chunk.getEdgeCases() != null && !chunk.getEdgeCases().isBlank()) {
-                sb.append("#### ⚠️ Interview Traps & Edge Cases\n\n");
-                sb.append(chunk.getEdgeCases()).append("\n\n");
-            }
-
-            sb.append("---\n*🔍 RAG Verified • Retrieved from LearnPath Knowledge Store (" + chunk.getDomain() + " • Relevance Score: " + String.format("%.1f", primary.getScore()) + ")*");
             return sb.toString();
         }
 
-        // 5. General Fallback
         return "### 💡 Technical Guide: " + userQuery + "\n\n" +
-                "**1. Core Concept**:\n" +
-                "Break down the problem into modular components with clear state invariants and deterministic bounds.\n\n" +
-                "**2. Scaling & Efficiency**:\n" +
-                "Always evaluate asymptotic scaling ($O(N)$ vs $O(N \\log N)$) and minimize auxiliary space ($O(1)$).\n\n" +
-                "**3. Practical Next Step**:\n" +
-                "Explore the dedicated **My Learning Path** or test your knowledge in the **Assessments** workspace!\n\n" +
-                "---\n*🔍 LearnPath AI Technical Mentor*";
+                "1. **Core Concept**:\n" +
+                "- Deconstruct the problem into modular components with clear state invariants.\n" +
+                "- Analyze time/space complexity trade-offs ($O(1)$ vs $O(N)$ vs $O(N \\log N)$).\n\n" +
+                "2. **Best Practices**:\n" +
+                "- Test boundary and edge cases.\n" +
+                "- Use proper data structures and caching to optimize performance bottlenecks.";
     }
 
     private boolean isGreeting(String lower) {
         return lower.equals("hi") || lower.equals("hello") || lower.equals("hey") ||
                 lower.equals("hi there") || lower.equals("hello there") || lower.equals("hey there") ||
-                lower.equals("greetings") || lower.equals("good morning") || lower.equals("good afternoon") ||
-                lower.equals("good evening") || lower.equals("what's up") || lower.equals("sup");
+                lower.equals("good morning") || lower.equals("good afternoon") || lower.equals("good evening");
     }
 }

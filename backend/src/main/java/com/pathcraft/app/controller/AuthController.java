@@ -60,15 +60,18 @@ public class AuthController {
         // Also ensure learning profile exists for user in Supabase
         Optional<UserLearningProfile> profileOpt = userLearningProfileRepository.findByUserEmail(email);
         if (profileOpt.isEmpty()) {
-            UserLearningProfile profile = new UserLearningProfile(
-                    UUID.randomUUID().toString(),
-                    email,
-                    targetRole.toLowerCase().contains("java") ? "java" : (targetRole.toLowerCase().contains("genai") ? "genai" : "dsa"),
-                    targetRole,
-                    0,
-                    "Module 1: Core Fundamentals",
-                    "[]"
-            );
+            UserLearningProfile profile = UserLearningProfile.builder()
+                    .id(UUID.randomUUID().toString())
+                    .userEmail(email)
+                    .fullName(fullName)
+                    .targetRole(targetRole)
+                    .overallReadinessPercentage(15.0)
+                    .currentStreakDays(1)
+                    .totalCoins(10)
+                    .profileCompleted(true)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
             userLearningProfileRepository.save(profile);
         }
 
