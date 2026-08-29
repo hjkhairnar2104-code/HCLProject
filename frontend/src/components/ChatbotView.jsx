@@ -164,7 +164,6 @@ public class Trie {
     return threads[0]?.id || 'thread_welcome_1';
   });
 
-  const API_BASE = 'http://localhost:8085';
   const [input, setInput] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState('');
