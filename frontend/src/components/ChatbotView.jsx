@@ -1279,10 +1279,6 @@ public class Trie {
 
       </div>
 
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }
