@@ -368,7 +368,7 @@ public class Trie {
         body: JSON.stringify({
           message: query,
           history: historyPayload,
-          userContext: user ? `User: ${user.fullName || user.email}` : "Target: Software & AI Engineer"
+          userContext: user ? `User Name: ${user.fullName || 'Learner'}, Email: ${user.email || 'N/A'}, Target Career Role: ${user.targetRole || 'Software & AI Engineer'}, Platform Level: ${user.role || 'Member'}` : "Guest User (Target: Software & AI Engineer)"
         })
       });
 

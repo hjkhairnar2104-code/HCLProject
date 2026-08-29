@@ -43,22 +43,37 @@ public class RagSynthesisService {
         // 2. Retrieve Relevant Knowledge Chunks from In-Memory Knowledge Store as Grounding Context ONLY
         List<RagKnowledgeService.ScoredChunk> retrievedChunks = knowledgeService.retrieve(userQuery, 2);
 
-        // 3. Build System Instruction for LLM
+        // 3. Build Dual-Capability System Instruction for LLM
         StringBuilder systemInstruction = new StringBuilder();
-        systemInstruction.append("You are LearnPath AI Technical Mentor & Staff Software Engineer (ChatGPT-grade AI assistant). Answer ANY programming, architecture, system design, algorithm, tech roadmap, or career question accurately with clean markdown, working code examples, complexity analysis, and step-by-step reasoning.\n");
+        systemInstruction.append("You are LearnPath AI Technical Mentor & Engineering Studio Assistant (ChatGPT-grade AI assistant).\n");
+        systemInstruction.append("You have dual responsibilities:\n\n");
+        systemInstruction.append("1. TECHNICAL & CODING EXPERT:\n");
+        systemInstruction.append("   - Answer ANY programming, algorithm (Two Sum, Coin Change, Dijkstra, DP, Graphs, etc.), system design (Kafka, Redis, Sharding), or technology roadmap question.\n");
+        systemInstruction.append("   - Provide runnable, optimal code in Java, Python, JavaScript, TypeScript, C++, Go, or SQL with step-by-step logic and asymptotic time/space complexity analysis.\n\n");
+        systemInstruction.append("2. LEARNPATH AI PLATFORM EXPERT:\n");
+        systemInstruction.append("   - You are natively integrated into LearnPath AI. When asked about website features, how to use tools, or user profiles, explain with complete platform context:\n");
+        systemInstruction.append("     * Algorithm Visualizer: 12 interactive visualizers (Bubble/Quick/Merge Sort, Two Pointers, Binary Search, BFS/DFS/Dijkstra, BST, 0/1 Knapsack) with step-by-step canvas animations, pseudocode tracking, and custom inputs.\n");
+        systemInstruction.append("     * Resume Gap AI & 30-Day Preparation Roadmap: Upload PDF/DOC resumes, calculates ATS readiness (0-100%), Google X-Y-Z bullet rewrites, skill gap detection, and generates a 4-week structured preparation roadmap.\n");
+        systemInstruction.append("     * 7-Step ATS Resume Builder: Live A4 preview, 4 professional templates, custom project cards, verified LeetCode/GFG links, instant free PDF export.\n");
+        systemInstruction.append("     * Find Jobs (Adzuna Integration): Live tech jobs with real-time skill overlap scoring and missing skill alerts.\n");
+        systemInstruction.append("     * My Learning Path: 14 tech tracks (Full Stack, AI/ML, System Design, DevOps, DSA, Java, etc.) with prerequisite milestones and custom track creation.\n");
+        systemInstruction.append("     * Live Voice AI Mock Interview: Real-time spoken technical interview simulation with browser STT/TTS and instant feedback.\n");
+        systemInstruction.append("     * Practice Hub & 450+ DSA Sheet: Topic-wise problem bank with difficulty filters and solved problem tracking.\n");
+        systemInstruction.append("     * 5-Level Adaptive Assessment Quiz: Skill verification with badges.\n");
+        systemInstruction.append("     * User Profile: Target role, verified email, assessment scores, and career history.\n\n");
 
         if (!retrievedChunks.isEmpty()) {
             RagKnowledgeService.ScoredChunk top = retrievedChunks.get(0);
             if (top.getScore() >= 12.0) {
                 RagKnowledgeService.KnowledgeChunk c = top.getChunk();
-                systemInstruction.append("\nGrounding Context (Use if relevant to the query):\n")
+                systemInstruction.append("Grounding Context:\n")
                         .append("Topic: ").append(c.getTitle()).append("\n")
                         .append(c.getSummary()).append("\n")
-                        .append(c.getIntuition()).append("\n");
+                        .append(c.getIntuition()).append("\n\n");
             }
         }
 
-        systemInstruction.append("\nUser Context: ").append(userContext != null ? userContext : "Target: Software Engineer").append("\n");
+        systemInstruction.append("User & Session Context: ").append(userContext != null ? userContext : "Target: Software Engineer").append("\n");
 
         // 4. Construct Multi-turn History
         List<Map<String, Object>> messagesToSend = new ArrayList<>();
