@@ -1,5 +1,5 @@
 // LearnPath AI — Unified SaaS Application Shell (Modern Clean Light Layout)
-const API_BASE = 'http://localhost:8085';
+const API_BASE = window.API_BASE || 'https://hclproject-cbmh.onrender.com';
 
 function App() {
   // Direct URL Route Detection for Admin Portal and Tabs

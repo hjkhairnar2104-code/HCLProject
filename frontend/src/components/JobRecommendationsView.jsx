@@ -1,6 +1,6 @@
 // LearnPath AI — Real-Time Job Recommendations & Skill Matching Engine (Adzuna Official Integration)
 function JobRecommendationsView({ user, targetRole, setActiveTab }) {
-  const API_BASE = 'http://localhost:8085';
+  const API_BASE = window.API_BASE || 'https://hclproject-cbmh.onrender.com';
 
   // 12 Curated Job Roles for user selection
   const CURATED_JOB_ROLES = [

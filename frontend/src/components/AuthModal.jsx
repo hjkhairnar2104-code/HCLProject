@@ -25,7 +25,7 @@ function AuthModal({
   const [errorMsg, setErrorMsg] = React.useState('');
   const [successMsg, setSuccessMsg] = React.useState('');
 
-  const API_BASE = 'http://localhost:8085';
+  const API_BASE = window.API_BASE || 'https://hclproject-cbmh.onrender.com';
 
   // Helper to get locally registered accounts
   const getRegisteredUsers = () => {

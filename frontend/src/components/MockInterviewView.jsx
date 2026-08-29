@@ -1,6 +1,6 @@
 // LearnPath AI - Live AI Mock Interview Studio (Clean Modern Light SaaS)
 function MockInterviewView({ user, setActiveTab }) {
-  const API_BASE = 'http://localhost:8085';
+  const API_BASE = window.API_BASE || 'https://hclproject-cbmh.onrender.com';
 
   // Step: 'setup' | 'interviewing' | 'evaluation'
   const [interviewStep, setInterviewStep] = React.useState('setup');
