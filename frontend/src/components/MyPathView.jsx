@@ -107,7 +107,7 @@ window.StructuredNoteRenderer = StructuredNoteRenderer;
 
 // LearnPath AI — Central Intelligent Learning Path Workspace with True Multi-Level Hierarchy (Domain -> Module -> Topic -> Subtopic)
 function MyPathView({ user, setActiveTab, targetRole, setTargetRole, setShowAuthModal }) {
-  const API_BASE = 'http://localhost:8085';
+  const API_BASE = window.API_BASE || 'https://hclproject-cbmh.onrender.com';
 
   const DOMAINS = window.LEARNING_PATH_DOMAINS || [];
 

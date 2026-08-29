@@ -165,16 +165,97 @@ public class CurriculumController {
     private List<Map<String, Object>> buildCuratedFallback(String query, String domain, String topic, String subtopic) {
         List<Map<String, Object>> fallbacks = new ArrayList<>();
         String primaryTitle = (subtopic != null && !subtopic.isBlank()) ? subtopic : ((topic != null && !topic.isBlank()) ? topic : domain);
-        
-        Map<String, Object> v1 = new HashMap<>();
-        v1.put("videoId", "BKorP55Aqvg"); // Professional engineering architecture video
-        v1.put("title", primaryTitle + " — Master Engineering Walkthrough");
-        v1.put("description", "In-depth engineering deep dive into " + primaryTitle + " covering core mechanics, trade-offs, and implementation.");
-        v1.put("channelTitle", "LearnPath AI Academy");
-        v1.put("publishedAt", "2026-01-15T00:00:00Z");
-        v1.put("thumbnailUrl", "https://img.youtube.com/vi/BKorP55Aqvg/mqdefault.jpg");
-        v1.put("youtubeUrl", "https://www.youtube.com/watch?v=BKorP55Aqvg");
-        fallbacks.add(v1);
+        String combined = (query + " " + domain + " " + topic + " " + subtopic).toLowerCase();
+
+        // 1. Data Structures & Algorithms
+        if (combined.contains("trie")) {
+            fallbacks.add(createVideoEntry("qA8l8c_805E", "Trie Data Structure & Auto-Complete — Striver", "take U forward", "https://img.youtube.com/vi/qA8l8c_805E/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("AXjmTQ8LEoI", "Trie Insertion, Search and StartsWith — NeetCode", "NeetCode", "https://img.youtube.com/vi/AXjmTQ8LEoI/mqdefault.jpg"));
+        } else if (combined.contains("dp") || combined.contains("dynamic prog") || combined.contains("knapsack")) {
+            fallbacks.add(createVideoEntry("oA5Gz3WzYHs", "Dynamic Programming Masterclass — FreeCodeCamp", "freeCodeCamp.org", "https://img.youtube.com/vi/oA5Gz3WzYHs/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("Hdr64lKQ3e4", "0/1 Knapsack & DP Patterns — Abdul Bari", "Abdul Bari", "https://img.youtube.com/vi/Hdr64lKQ3e4/mqdefault.jpg"));
+        } else if (combined.contains("graph") || combined.contains("bfs") || combined.contains("dfs") || combined.contains("dijkstra")) {
+            fallbacks.add(createVideoEntry("tWVWeAqZ0WU", "Graph Theory & Algorithms Course — William Fiset", "freeCodeCamp.org", "https://img.youtube.com/vi/tWVWeAqZ0WU/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("iaABm44N4ow", "Dijkstra's & Shortest Path Algorithm — Abdul Bari", "Abdul Bari", "https://img.youtube.com/vi/iaABm44N4ow/mqdefault.jpg"));
+        } else if (combined.contains("tree") || combined.contains("bst") || combined.contains("binary tree") || combined.contains("segment")) {
+            fallbacks.add(createVideoEntry("76dhtgZt38A", "Binary Trees & BST Complete Tutorial — Striver", "take U forward", "https://img.youtube.com/vi/76dhtgZt38A/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("8hly31xKli0", "Binary Tree Inversion & Traversals — NeetCode", "NeetCode", "https://img.youtube.com/vi/8hly31xKli0/mqdefault.jpg"));
+        } else if (combined.contains("array") || combined.contains("two pointer") || combined.contains("sliding window")) {
+            fallbacks.add(createVideoEntry("37E9ckMDdTk", "Array Algorithms & Sliding Window — Striver", "take U forward", "https://img.youtube.com/vi/37E9ckMDdTk/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("MK-NZ4hN7wk", "Sliding Window Maximum & Two Pointers — NeetCode", "NeetCode", "https://img.youtube.com/vi/MK-NZ4hN7wk/mqdefault.jpg"));
+        }
+
+        // 2. Java & Spring Boot
+        else if (combined.contains("spring") || combined.contains("microservice") || combined.contains("hibernate") || combined.contains("jpa")) {
+            fallbacks.add(createVideoEntry("35EQXmHKZYs", "Spring Boot 3 Full Course 2026 — Amigoscode", "Amigoscode", "https://img.youtube.com/vi/35EQXmHKZYs/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("k4k3Cq687gM", "Spring Cloud Microservices & Distributed Architecture — Java Techie", "Java Techie", "https://img.youtube.com/vi/k4k3Cq687gM/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("r4S_v5vT7b4", "Java 21 Virtual Threads & Concurrency — Defog Tech", "Defog Tech", "https://img.youtube.com/vi/r4S_v5vT7b4/mqdefault.jpg"));
+        } else if (combined.contains("java")) {
+            fallbacks.add(createVideoEntry("eIrMbAQSU34", "Java Full Course for Beginners — Programming with Mosh", "Programming with Mosh", "https://img.youtube.com/vi/eIrMbAQSU34/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("grEKMHGYyns", "Java Object Oriented Programming (OOP) — freeCodeCamp", "freeCodeCamp.org", "https://img.youtube.com/vi/grEKMHGYyns/mqdefault.jpg"));
+        }
+
+        // 3. Generative AI, LLMs & Machine Learning
+        else if (combined.contains("genai") || combined.contains("llm") || combined.contains("rag") || combined.contains("transformer") || combined.contains("langchain")) {
+            fallbacks.add(createVideoEntry("kCc8FmEb1nY", "Let's build GPT: from scratch, in code — Andrej Karpathy", "Andrej Karpathy", "https://img.youtube.com/vi/kCc8FmEb1nY/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("wUAUdEw50x4", "Building Production RAG Systems with LangChain & Vector DBs — Krish Naik", "Krish Naik", "https://img.youtube.com/vi/wUAUdEw50x4/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("aircAruvnKk", "Neural Networks Deep Dive — 3Blue1Brown", "3Blue1Brown", "https://img.youtube.com/vi/aircAruvnKk/mqdefault.jpg"));
+        } else if (combined.contains("machine learning") || combined.contains("ml") || combined.contains("deep learning")) {
+            fallbacks.add(createVideoEntry("i_LwzRVP7bg", "Machine Learning Course for Beginners — freeCodeCamp", "freeCodeCamp.org", "https://img.youtube.com/vi/i_LwzRVP7bg/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("tPYj3fFJGjk", "PyTorch for Deep Learning Bootcamp — Daniel Bourke", "freeCodeCamp.org", "https://img.youtube.com/vi/tPYj3fFJGjk/mqdefault.jpg"));
+        }
+
+        // 4. System Design & Cloud Architecture
+        else if (combined.contains("system design") || combined.contains("kafka") || combined.contains("redis") || combined.contains("distributed")) {
+            fallbacks.add(createVideoEntry("i53Gi_K3N7I", "System Design Primer & Scalability Architecture — ByteByteGo", "ByteByteGo", "https://img.youtube.com/vi/i53Gi_K3N7I/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("7nL93t9B89I", "Apache Kafka Architecture & Event Streaming — ByteByteGo", "ByteByteGo", "https://img.youtube.com/vi/7nL93t9B89I/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("jgpVdSwp4p8", "Redis Caching Strategies & Distributed Locks — Hussein Nasser", "Hussein Nasser", "https://img.youtube.com/vi/jgpVdSwp4p8/mqdefault.jpg"));
+        }
+
+        // 5. Full Stack Web & React
+        else if (combined.contains("react") || combined.contains("next") || combined.contains("full stack") || combined.contains("frontend") || combined.contains("javascript")) {
+            fallbacks.add(createVideoEntry("bMknfKXIFA8", "React Course 2026 — Beginner to Pro — freeCodeCamp", "freeCodeCamp.org", "https://img.youtube.com/vi/bMknfKXIFA8/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("w7ejDZ8SWv8", "React JS Crash Course — Traversy Media", "Traversy Media", "https://img.youtube.com/vi/w7ejDZ8SWv8/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("8aGhZQkoFbQ", "Next.js Full Stack App Architecture — Sonny Sangha", "Sonny Sangha", "https://img.youtube.com/vi/8aGhZQkoFbQ/mqdefault.jpg"));
+        }
+
+        // 6. DevOps, Docker & Kubernetes
+        else if (combined.contains("docker") || combined.contains("kubernetes") || combined.contains("devops") || combined.contains("ci/cd")) {
+            fallbacks.add(createVideoEntry("3c-iBn73dDE", "Docker Tutorial for Beginners [2026] — TechWorld with Nana", "TechWorld with Nana", "https://img.youtube.com/vi/3c-iBn73dDE/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("X48VuDVv0do", "Kubernetes in 1 Hour — TechWorld with Nana", "TechWorld with Nana", "https://img.youtube.com/vi/X48VuDVv0do/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("R8_veQiYErI", "CI/CD Pipeline with GitHub Actions — freeCodeCamp", "freeCodeCamp.org", "https://img.youtube.com/vi/R8_veQiYErI/mqdefault.jpg"));
+        }
+
+        // 7. Python Backend & Data Engineering
+        else if (combined.contains("python") || combined.contains("fastapi") || combined.contains("django")) {
+            fallbacks.add(createVideoEntry("_uQrJ0TkZlc", "Python Full Course for Beginners — Programming with Mosh", "Programming with Mosh", "https://img.youtube.com/vi/_uQrJ0TkZlc/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("t8pPdKYpowI", "FastAPI Full Course — Python Web API Development — Sanjeev Thiyagarajan", "freeCodeCamp.org", "https://img.youtube.com/vi/t8pPdKYpowI/mqdefault.jpg"));
+        }
+
+        // 8. SQL & Database Internals
+        else if (combined.contains("sql") || combined.contains("database") || combined.contains("postgres")) {
+            fallbacks.add(createVideoEntry("HXV3zeQKqGY", "SQL Tutorial - Full Database Course for Beginners — freeCodeCamp", "freeCodeCamp.org", "https://img.youtube.com/vi/HXV3zeQKqGY/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("wTPGW1PNy_Y", "Database Indexing & Query Optimization — Hussein Nasser", "Hussein Nasser", "https://img.youtube.com/vi/wTPGW1PNy_Y/mqdefault.jpg"));
+        }
+
+        // Default Engineering Walkthrough
+        if (fallbacks.isEmpty()) {
+            fallbacks.add(createVideoEntry("kZ_wB1o8l6E", primaryTitle + " — Core Mechanics & Implementation", "LearnPath AI Academy", "https://img.youtube.com/vi/kZ_wB1o8l6E/mqdefault.jpg"));
+            fallbacks.add(createVideoEntry("i53Gi_K3N7I", primaryTitle + " — System Architecture & Production Best Practices", "ByteByteGo", "https://img.youtube.com/vi/i53Gi_K3N7I/mqdefault.jpg"));
+        }
+
         return fallbacks;
+    }
+
+    private Map<String, Object> createVideoEntry(String videoId, String title, String channel, String thumb) {
+        Map<String, Object> v = new HashMap<>();
+        v.put("videoId", videoId);
+        v.put("title", title);
+        v.put("description", "High-yield engineering tutorial covering core mechanics and interview patterns.");
+        v.put("channelTitle", channel);
+        v.put("publishedAt", "2026-01-01T00:00:00Z");
+        v.put("thumbnailUrl", thumb);
+        v.put("youtubeUrl", "https://www.youtube.com/watch?v=" + videoId);
+        return v;
     }
 }
