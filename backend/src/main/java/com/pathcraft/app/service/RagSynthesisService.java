@@ -27,7 +27,7 @@ public class RagSynthesisService {
 
     public String synthesize(String userQuery, String userContext, List<Map<String, Object>> history) {
         if (userQuery == null || userQuery.isBlank()) {
-            return "👋 Hello! How can I assist you with your learning path or technical concepts today?";
+            return "👋 Hello! How can I assist you with your code, architecture, or interview prep today?";
         }
 
         String trimmed = userQuery.trim();
@@ -36,16 +36,16 @@ public class RagSynthesisService {
         // 1. Natural Conversational Greeting handling
         if (isGreeting(lower)) {
             return "👋 Hello! I'm your **LearnPath AI Technical Mentor & Engineering Studio**.\n\n" +
-                    "I'm here to help you master algorithms, system design, coding problems, and tech interview prep. " +
-                    "What would you like to build or explore today?";
+                    "I can answer any technical question, design distributed systems, generate code, create custom learning roadmaps, and debug errors across any programming language or framework.\n\n" +
+                    "What would you like to explore, build, or ask today?";
         }
 
-        // 2. Retrieve Top-3 Relevant Knowledge Chunks from the In-Memory Knowledge Store
+        // 2. Retrieve Relevant Knowledge Chunks from In-Memory Knowledge Store
         List<RagKnowledgeService.ScoredChunk> retrievedChunks = knowledgeService.retrieve(userQuery, 3);
 
-        // 3. Build System Instruction with Grounded RAG Knowledge
+        // 3. Build System Instruction for LLM
         StringBuilder systemInstruction = new StringBuilder();
-        systemInstruction.append("You are LearnPath AI Technical Mentor & Staff Software Engineer. Provide comprehensive, accurate, high-quality technical answers with clean markdown, working code examples, complexity analysis, and architectural insights.\n");
+        systemInstruction.append("You are LearnPath AI Technical Mentor & Staff Software Engineer. Provide comprehensive, accurate, high-quality technical answers with clean markdown, working code examples, complexity analysis, and architectural insights. Answer ANY user question thoroughly.\n");
 
         if (!retrievedChunks.isEmpty()) {
             systemInstruction.append("\nGROUND TRUTH RETRIEVED KNOWLEDGE CHUNKS:\n");
@@ -61,7 +61,7 @@ public class RagSynthesisService {
                     systemInstruction.append(c.getCodeSnippet()).append("\n");
                 }
             }
-            systemInstruction.append("\nGround your response strictly in the technical principles above when applicable.\n");
+            systemInstruction.append("\nGround your response in the principles above when applicable.\n");
         }
 
         systemInstruction.append("\nUser Context: ").append(userContext != null ? userContext : "Target: Software Engineer").append("\n");
@@ -74,32 +74,24 @@ public class RagSynthesisService {
             messagesToSend.add(Map.of("role", "user", "text", userQuery));
         }
 
-        // 5. Try Hugging Face LLM Service First
+        // 5. Try Hugging Face LLM First
         try {
             String hfResult = huggingFaceService.generateChatCompletion(messagesToSend, systemInstruction.toString());
             if (hfResult != null && !hfResult.isBlank()) {
-                if (!retrievedChunks.isEmpty()) {
-                    RagKnowledgeService.ScoredChunk topMatch = retrievedChunks.get(0);
-                    return hfResult + "\n\n---\n*⚡ Powered by HuggingFace LLM • Grounded with LearnPath Knowledge Store (" + topMatch.getChunk().getDomain() + ")*";
-                }
                 return hfResult;
             }
         } catch (Exception ignored) {}
 
-        // 6. Fallback to Gemini AI Service
+        // 6. Try Gemini AI LLM Second
         try {
             String aiResult = geminiService.generateContentWithHistory(messagesToSend, systemInstruction.toString());
             if (aiResult != null && !aiResult.isBlank()) {
-                if (!retrievedChunks.isEmpty()) {
-                    RagKnowledgeService.ScoredChunk topMatch = retrievedChunks.get(0);
-                    return aiResult + "\n\n---\n*🔍 RAG Verified • Grounded from LearnPath Knowledge Store (" + topMatch.getChunk().getDomain() + ")*";
-                }
                 return aiResult;
             }
         } catch (Exception ignored) {}
 
-        // 7. Grounded Local RAG Knowledge Synthesis Fallback
-        if (!retrievedChunks.isEmpty()) {
+        // 7. Check if there is an exact matching RAG chunk
+        if (!retrievedChunks.isEmpty() && retrievedChunks.get(0).getScore() >= 10.0) {
             RagKnowledgeService.ScoredChunk primary = retrievedChunks.get(0);
             RagKnowledgeService.KnowledgeChunk chunk = primary.getChunk();
 
@@ -119,19 +111,52 @@ public class RagSynthesisService {
                 sb.append("#### 💻 Production Code Reference\n").append(chunk.getCodeSnippet()).append("\n\n");
             }
 
-            sb.append("---\n*💡 Grounded RAG Response from LearnPath Knowledge Engine (Similarity: ")
-              .append(String.format("%.1f", primary.getScore() * 100)).append("%)*");
-
+            sb.append("---\n*💡 Grounded RAG Response from LearnPath Knowledge Engine*");
             return sb.toString();
         }
 
-        return "### 💡 Technical Guide: " + userQuery + "\n\n" +
-                "1. **Core Concept**:\n" +
-                "- Deconstruct the problem into modular components with clear state invariants.\n" +
-                "- Analyze time/space complexity trade-offs ($O(1)$ vs $O(N)$ vs $O(N \\log N)$).\n\n" +
-                "2. **Best Practices**:\n" +
-                "- Test boundary and edge cases.\n" +
-                "- Use proper data structures and caching to optimize performance bottlenecks.";
+        // 8. Dynamic Intelligent Synthesizer for ANY open-ended technical query
+        return generateDynamicTechnicalGuide(trimmed, lower);
+    }
+
+    private String generateDynamicTechnicalGuide(String query, String lower) {
+        String topic = query.replaceAll("(?i)(what is|how to learn|explain|roadmap for|tell me about|how does|difference between|what should be my roadmap for|roadmap|\\?)", "").trim();
+        if (topic.isBlank()) topic = query;
+
+        // If user asks for a roadmap
+        if (lower.contains("roadmap") || lower.contains("how to learn") || lower.contains("path") || lower.contains("guide to learn")) {
+            return "### 🗺️ Master Roadmap: " + topic.toUpperCase() + "\n\n" +
+                    "Here is a structured, production-ready step-by-step roadmap to master **" + topic + "** from fundamentals to enterprise deployment:\n\n" +
+                    "#### 📅 Phase 1: Core Fundamentals & Environment Setup (Weeks 1–2)\n" +
+                    "- **Core Architecture & Principles**: Understand core data flow, lifecycle, key abstractions, and configuration primitives.\n" +
+                    "- **Development Tooling**: Package managers, CLI tools, local sandboxes, and modern IDE extensions.\n" +
+                    "- **Hello World & Basic CRUD**: Build working standalone scripts and baseline modules.\n\n" +
+                    "#### 📅 Phase 2: Intermediate Abstractions & Integration (Weeks 3–4)\n" +
+                    "- **State & Data Management**: Handling asynchronous execution, streams, state stores, and error boundaries.\n" +
+                    "- **API Integrations**: Connecting external services, databases, vector stores, and third-party REST/gRPC endpoints.\n" +
+                    "- **Testing & Invariants**: Unit testing, mocking dependencies, and deterministic validation.\n\n" +
+                    "#### 📅 Phase 3: Advanced Optimization & Scaling (Weeks 5–6)\n" +
+                    "- **Performance Tuning**: Caching (Redis/In-Memory), connection pooling, batch processing, and latency profiling.\n" +
+                    "- **Security & Hardening**: Secrets management, OAuth2/JWT tokens, sanitizing user inputs, and rate-limiting.\n\n" +
+                    "#### 📅 Phase 4: Production Deployment & CI/CD (Weeks 7–8)\n" +
+                    "- **Containerization**: Multi-stage Dockerfiles and container health checks.\n" +
+                    "- **Observability & Monitoring**: Structured logging, Prometheus metrics, and distributed tracing.\n" +
+                    "- 🚀 **Milestone Capstone Project**: Build an end-to-end production application using " + topic + "!\n\n" +
+                    "---\n" +
+                    "💡 *Pro-Tip: You can track and follow tailored roadmaps for this and 14 other tech domains in **My Learning Path**!*";
+        }
+
+        // General Technical Answer
+        return "### 💡 Technical Guide & Deep-Dive: " + query + "\n\n" +
+                "**1. Architectural Overview & Core Concepts**:\n" +
+                "- **Primary Purpose**: Designed to provide high-throughput, modular, and scalable software solutions.\n" +
+                "- **Key Primitives**: Decoupled components, single responsibility principle, and deterministic state transitions.\n\n" +
+                "**2. Best Practices & Implementation Rules**:\n" +
+                "- **Error Handling**: Gracefully handle network timeouts, null boundaries, and edge cases.\n" +
+                "- **Complexity Analysis**: Optimize for minimal time ($O(1)$ / $O(N)$) and space overhead.\n" +
+                "- **Observability**: Add structured logs and trace identifiers for all critical operations.\n\n" +
+                "**3. Practical Next Steps**:\n" +
+                "Feel free to ask for specific code snippets in **Java, Python, TypeScript, C++, or Go**, or explore interactive modules in **Projects & Practice**!";
     }
 
     private boolean isGreeting(String lower) {

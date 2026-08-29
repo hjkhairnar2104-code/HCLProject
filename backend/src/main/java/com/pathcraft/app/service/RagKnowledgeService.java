@@ -69,7 +69,8 @@ public class RagKnowledgeService {
     public List<ScoredChunk> retrieve(String query, int topK) {
         if (query == null || query.isBlank()) return Collections.emptyList();
 
-        String[] queryTokens = query.toLowerCase()
+        String cleanQuery = query.toLowerCase().trim();
+        String[] queryTokens = cleanQuery
                 .replaceAll("[^a-zA-Z0-9\\s]", " ")
                 .split("\\s+");
         Set<String> tokenSet = new HashSet<>(Arrays.asList(queryTokens));
@@ -77,24 +78,37 @@ public class RagKnowledgeService {
         List<ScoredChunk> scored = new ArrayList<>();
 
         for (KnowledgeChunk chunk : corpus) {
+            // Guard: LearnPath Platform overview chunk should ONLY match explicit platform questions
+            if ("learnpath_platform_features".equals(chunk.getId())) {
+                boolean isExplicitPlatformQuestion = cleanQuery.contains("learnpath") ||
+                        cleanQuery.contains("what features") ||
+                        cleanQuery.contains("platform feature") ||
+                        cleanQuery.contains("what can this app do") ||
+                        cleanQuery.contains("website feature") ||
+                        cleanQuery.contains("platform overview");
+                if (!isExplicitPlatformQuestion) {
+                    continue;
+                }
+            }
+
             double score = 0.0;
             String lowerTitle = chunk.getTitle().toLowerCase();
             String lowerDomain = chunk.getDomain().toLowerCase();
 
             // 1. Exact Title match boost
-            if (lowerTitle.contains(query.toLowerCase()) || query.toLowerCase().contains(lowerTitle)) {
-                score += 10.0;
+            if (lowerTitle.contains(cleanQuery) || cleanQuery.contains(lowerTitle)) {
+                score += 15.0;
             }
 
             // 2. Keyword overlap scoring
             for (String kw : chunk.getKeywords()) {
                 String lkw = kw.toLowerCase();
-                if (query.toLowerCase().contains(lkw)) {
-                    score += 4.0;
+                if (cleanQuery.contains(lkw)) {
+                    score += 6.0;
                 }
                 for (String t : tokenSet) {
-                    if (t.length() > 2 && (lkw.contains(t) || t.contains(lkw))) {
-                        score += 2.0;
+                    if (t.length() > 2 && lkw.equals(t)) {
+                        score += 3.0;
                     }
                 }
             }
@@ -103,8 +117,7 @@ public class RagKnowledgeService {
             for (String t : tokenSet) {
                 if (t.length() > 2) {
                     if (lowerTitle.contains(t)) score += 3.0;
-                    if (lowerDomain.contains(t)) score += 1.5;
-                    if (chunk.getSummary().toLowerCase().contains(t)) score += 0.8;
+                    if (lowerDomain.contains(t)) score += 1.0;
                 }
             }
 
@@ -119,7 +132,48 @@ public class RagKnowledgeService {
 
     private void initializeKnowledgeBase() {
         // =====================================================================
-        // 1. FULL STACK & JAVASCRIPT VS REACT
+        // 1. LANGCHAIN & AI AGENTS: COMPLETE ENGINEERING ROADMAP
+        // =====================================================================
+        corpus.add(new KnowledgeChunk(
+                "langchain_ai_agent_roadmap",
+                "LangChain & AI Agent Engineering: 4-Week Production Roadmap",
+                "Generative AI & LLM Engineering",
+                Arrays.asList("langchain", "roadmap", "ai agent", "lcel", "vectorstore", "retrieval", "prompt template", "tools", "langgraph", "rag", "agents", "how to learn langchain"),
+                "A complete 4-week step-by-step roadmap to master LangChain, LCEL (LangChain Expression Language), Vector Databases, RAG pipelines, and autonomous AI Agents with LangGraph.",
+                "**Comprehensive 4-Week LangChain Mastery Roadmap**:\n\n" +
+                "### 📅 Week 1: Core Fundamentals & LCEL Architecture\n" +
+                "- **PromptTemplates & Chat Models**: `ChatPromptTemplate`, `FewShotChatMessagePromptTemplate`, System vs Human vs AI messages.\n" +
+                "- **Structured Output Parsing**: Using Pydantic parsers (`PydanticOutputParser`, `JsonOutputParser`, `StrOutputParser`) to enforce JSON guarantees.\n" +
+                "- **LCEL (LangChain Expression Language)**: The pipe `|` operator composition: `chain = prompt | model | parser`.\n" +
+                "- 🛠️ **Hands-on Project**: *Multi-format Code Reviewer & Explanation Bot*.\n\n" +
+                "### 📅 Week 2: Document Processing, Embeddings & Vector Stores (RAG)\n" +
+                "- **Document Loaders**: PDF, Markdown, CSV, Notion, WebBaseLoader.\n" +
+                "- **Text Splitters**: `RecursiveCharacterTextSplitter` (chunk_size=1000, chunk_overlap=200), token-aware chunking.\n" +
+                "- **Vector Databases**: Embedding models (OpenAI `text-embedding-3-small`, HuggingFace `all-MiniLM-L6-v2`) with FAISS, Chroma, Pinecone, Qdrant.\n" +
+                "- **Advanced Retrievers**: Multi-Query Retriever, ParentDocumentRetriever, Contextual Compression with Cross-Encoders.\n" +
+                "- 🛠️ **Hands-on Project**: *Enterprise PDF Documentation Chat with Source Citations*.\n\n" +
+                "### 📅 Week 3: Memory, Tools & ReAct Agents\n" +
+                "- **Conversation Memory**: `ConversationBufferWindowMemory`, `ConversationSummaryMemory`, SQLite message history.\n" +
+                "- **Custom Tool Creation**: Using `@tool` decorator, Pydantic `args_schema`, integrating Tavily Search, SQL Database, Calculator.\n" +
+                "- **Agent Executors**: `create_tool_calling_agent`, `create_react_agent` (Reason + Act cycle with step observation).\n" +
+                "- 🛠️ **Hands-on Project**: *Autonomous SQL Database Query & Data Visualization Agent*.\n\n" +
+                "### 📅 Week 4: LangGraph Multi-Agent Workflows & Production Observability\n" +
+                "- **LangGraph State Machines**: Nodes, Edges, Conditional branching, Human-in-the-Loop approval workflows.\n" +
+                "- **Evaluation & Tracing**: Integrating LangSmith for latency, token tracing, and RAG evaluation with Ragas framework.\n" +
+                "- 🛠️ **Capstone Project**: *Multi-Agent Software Architecture Synthesizer (Researcher + Coder + Reviewer)*.",
+                "| Week | Core Focus Area | Key LangChain Modules & Tools | Milestone Project |\n" +
+                "| :--- | :--- | :--- | :--- |\n" +
+                "| **Week 1** | Prompts, Models & LCEL | `ChatPromptTemplate`, `StrOutputParser`, LCEL `|` | Code Review Bot |\n" +
+                "| **Week 2** | Vector Stores & RAG | `RecursiveCharacterTextSplitter`, `FAISS`, Embeddings | PDF Documentation QA |\n" +
+                "| **Week 3** | Tools & ReAct Agents | `@tool`, `create_tool_calling_agent`, Memory | SQL Analyst Agent |\n" +
+                "| **Week 4** | LangGraph & Multi-Agent | `StateGraph`, LangSmith, Ragas Evaluation | Multi-Agent Dev Studio |",
+                "```python\n# Complete Production LangChain LCEL + RAG Pipeline\nfrom langchain_core.prompts import ChatPromptTemplate\nfrom langchain_core.output_parsers import StrOutputParser\nfrom langchain_community.vectorstores import FAISS\nfrom langchain_huggingface import HuggingFaceEmbeddings\nfrom langchain_core.runnables import RunnablePassthrough\n\n# 1. Vector Store Setup\nembeddings = HuggingFaceEmbeddings(model_name=\"all-MiniLM-L6-v2\")\nvectorstore = FAISS.from_texts([\"LangChain is an open-source framework for building LLM applications.\"], embeddings)\nretriever = vectorstore.as_retriever(search_kwargs={\"k\": 2})\n\n# 2. Prompt Template\nprompt = ChatPromptTemplate.from_template(\"\"\"\nAnswer based strictly on the context below:\nContext: {context}\nQuestion: {question}\n\"\"\")\n\n# 3. LCEL Chain with Model\n# chain = {\"context\": retriever, \"question\": RunnablePassthrough()} | prompt | model | StrOutputParser()\n```",
+                "**Production Best Practices**:\n- Use **LangGraph** instead of deprecated `AgentExecutor` for stateful multi-step reasoning.\n- Enforce strict typing with Pydantic v2 schemas.\n- Always wrap LLM API calls with exponential backoff retries and token-budget rate limiters.",
+                "**Next Steps**:\n- You can practice related GenAI modules inside **My Learning Path &rarr; Generative AI Engineer Track**!"
+        ));
+
+        // =====================================================================
+        // 2. FULL STACK & JAVASCRIPT VS REACT
         // =====================================================================
         corpus.add(new KnowledgeChunk(
                 "fullstack_js_vs_react",
@@ -144,12 +198,12 @@ public class RagKnowledgeService {
         ));
 
         // =====================================================================
-        // 2. DSA: TRIE (PREFIX TREE)
+        // 3. DSA: TRIE (PREFIX TREE)
         // =====================================================================
         corpus.add(new KnowledgeChunk(
                 "dsa_trie_prefix_tree",
                 "Trie (Prefix Tree) Data Structure & Autocomplete",
-                "Data Structures & Algorithms (Module 16)",
+                "Data Structures & Algorithms",
                 Arrays.asList("trie", "prefix tree", "autocomplete", "dictionary", "search prefix", "insert", "search", "startswith"),
                 "A Trie is a tree data structure used for storing dynamic sets of strings, enabling O(L) prefix search and dictionary lookups.",
                 "**The Fundamental Intuition**:\n" +
@@ -166,12 +220,12 @@ public class RagKnowledgeService {
         ));
 
         // =====================================================================
-        // 3. DSA: DYNAMIC PROGRAMMING (0/1 KNAPSACK & 1D OPTIMIZATION)
+        // 4. DSA: DYNAMIC PROGRAMMING (0/1 KNAPSACK & 1D OPTIMIZATION)
         // =====================================================================
         corpus.add(new KnowledgeChunk(
                 "dsa_dp_knapsack",
                 "0/1 Knapsack Problem & 1D Space Optimization",
-                "Data Structures & Algorithms (Module 10)",
+                "Data Structures & Algorithms",
                 Arrays.asList("knapsack", "dp", "dynamic programming", "0/1 knapsack", "space optimization", "subset sum", "memoization"),
                 "0/1 Knapsack maximizes total value within weight capacity W where each item can be chosen at most once.",
                 "**The Fundamental Intuition**:\n" +
@@ -187,7 +241,7 @@ public class RagKnowledgeService {
         ));
 
         // =====================================================================
-        // 4. SYSTEM DESIGN: KAFKA & DISTRIBUTED EVENT STREAMING
+        // 5. SYSTEM DESIGN: KAFKA & DISTRIBUTED EVENT STREAMING
         // =====================================================================
         corpus.add(new KnowledgeChunk(
                 "sysdesign_kafka",
@@ -210,7 +264,7 @@ public class RagKnowledgeService {
         ));
 
         // =====================================================================
-        // 5. GENAI: RAG & CROSS-ENCODER RERANKING
+        // 6. GENAI: RAG & CROSS-ENCODER RERANKING
         // =====================================================================
         corpus.add(new KnowledgeChunk(
                 "genai_rag_architecture",
@@ -222,7 +276,7 @@ public class RagKnowledgeService {
                 "- **Bi-Encoder (Vector Search)**: Fast $O(\\log N)$ lookup by comparing pre-computed embeddings via cosine similarity, but lacks nuanced query-document cross-attention.\n" +
                 "- **Cross-Encoder Reranker**: Computes deep self-attention across `(Query, Document)` pairs simultaneously to score true semantic relevance, filtering top-3 passages.",
                 "| Stage | Mechanism | Latency | Accuracy / Granularity |\n" +
-                "| :--- | :--- | :--- | :--- |\n" +
+                "| :--- | :--- | :--- |\n" +
                 "| **1. Hybrid Retrieval** | BM25 (Keywords) + Dense Vector (HNSW) via RRF | ~10-20 ms | High Recall (Top 50 Candidates) |\n" +
                 "| **2. Cross-Encoder** | Joint Self-Attention (`ms-marco-MiniLM`) | ~40-60 ms | High Precision (Top 3-5 Chunks) |\n" +
                 "| **3. LLM Synthesis** | Grounded Generation with Source Citations | ~500 ms | 0% Hallucination Guarantee |",
@@ -232,7 +286,7 @@ public class RagKnowledgeService {
         ));
 
         // =====================================================================
-        // 6. JAVA 21: VIRTUAL THREADS VS CARRIER THREADS
+        // 7. JAVA 21: VIRTUAL THREADS VS CARRIER THREADS
         // =====================================================================
         corpus.add(new KnowledgeChunk(
                 "java21_virtual_threads",
@@ -256,24 +310,24 @@ public class RagKnowledgeService {
         ));
 
         // =====================================================================
-        // 7. LEARNPATH AI: COMPLETE PLATFORM ARCHITECTURE & FEATURES
+        // 8. LEARNPATH AI: PLATFORM ARCHITECTURE & TOOLS OVERVIEW
         // =====================================================================
         corpus.add(new KnowledgeChunk(
                 "learnpath_platform_features",
                 "LearnPath AI Platform Features & Engineering Suite",
-                "LearnPath AI Platform Architecture",
-                Arrays.asList("learnpath", "features", "platform", "tools", "modules", "what can you do", "capabilities", "overview", "what features"),
+                "LearnPath Platform",
+                Arrays.asList("learnpath", "what can this app do", "platform features", "what features does learnpath offer"),
                 "LearnPath AI is an all-in-one AI-powered engineering career companion featuring interactive algorithm visualization, ATS resume builder, resume gap analysis, real-time job matching, and AI tutoring.",
                 "**Core Platform Modules & Capabilities**:\n" +
-                "1. 💻 **Algorithm Visualizer (Interactive Canvas)**: Step-by-step interactive animations for 12 core algorithms (Sorting, Two Pointers, Binary Search, Graphs/Dijkstra, Dynamic Programming, Trees) with custom inputs, speed sliders, and line-by-line pseudocode tracking.\n" +
-                "2. 📄 **Resume Gap AI & 30-Day Job Roadmap**: Ingests PDF/DOC resumes, extracts bullets, scores ATS strength, suggests Google X-Y-Z FAANG rewrites, surfaces Top 4–5 curated jobs, and generates an actionable 30-day sprint preparation roadmap.\n" +
-                "3. 📝 **Step-by-Step ATS Resume Builder**: 7-step builder with live A4 preview, 4 professional templates, custom projects, LeetCode/GFG link integration, and 100% free unwatermarked PDF export.\n" +
-                "4. 💼 **Find Jobs & Live Skill Match (Adzuna Integration)**: Real employer listings with real-time match %, missing skill gap identification, and persistent per-user preferences.\n" +
-                "5. 🎯 **Adaptive My Learning Path**: Graph-based milestone roadmap with prerequisite locking and trackable progress across Full Stack, AI/ML, and Systems.\n" +
-                "6. 🎙️ **Live Voice AI Mock Interview**: Real-time voice simulation with Speech-to-Text and immediate technical scoring.\n" +
-                "7. ⚔️ **Practice Hub & DSA Sheet**: 450+ curated problem tracker categorized by topic and difficulty with LeetCode/GFG sync and solution guides.\n" +
-                "8. 📊 **5-Level Assessment Quiz Engine**: Adaptive difficulty quizzes with real-time feedback and skill verification badges.\n" +
-                "9. 🤖 **AI Technical Tutor (RAG-Powered)**: Multi-turn engineering mentor with grounded domain retrieval and Gemini AI synthesis.",
+                "1. 💻 **Algorithm Visualizer (Interactive Canvas)**: Step-by-step interactive animations for 12 core algorithms with custom inputs and speed controls.\n" +
+                "2. 📄 **Resume Gap AI & 30-Day Job Roadmap**: Ingests resumes, scores ATS strength, and generates tailored 30-day interview prep roadmaps.\n" +
+                "3. 📝 **Step-by-Step ATS Resume Builder**: 7-step builder with live A4 preview and 100% free unwatermarked PDF export.\n" +
+                "4. 💼 **Find Jobs & Live Skill Match (Adzuna Integration)**: Real employer listings with real-time skill overlap scoring.\n" +
+                "5. 🎯 **Adaptive My Learning Path**: Milestone curriculum with progress tracking across 14 engineering domains.\n" +
+                "6. 🎙️ **Live Voice AI Mock Interview**: Real-time voice simulation with Speech-to-Text.\n" +
+                "7. ⚔️ **Practice Hub & DSA Sheet**: 450+ curated problem tracker with LeetCode/GFG sync.\n" +
+                "8. 📊 **5-Level Assessment Quiz Engine**: Adaptive difficulty quizzes with real-time scoring.\n" +
+                "9. 🤖 **AI Technical Tutor (RAG-Powered)**: Multi-turn engineering mentor with grounded retrieval.",
                 "| Platform Feature | Primary Purpose | Tech Stack / Mechanism |\n" +
                 "| :--- | :--- | :--- |\n" +
                 "| **Algorithm Visualizer** | Visual mental models of complex DSA | HTML5 Canvas / React Animation State |\n" +
@@ -282,9 +336,8 @@ public class RagKnowledgeService {
                 "| **Live Jobs Engine** | Match real employer openings | Official Adzuna REST API + Skill Overlap Engine |\n" +
                 "| **Live Voice Interview** | Spoken interview simulation | Web Speech API STT/TTS + Gemini Evaluation |\n" +
                 "| **Practice Hub (450+)** | DSA Mastery with LeetCode/GFG stats | Topic-based Problem Bank with Solved Tracking |\n" +
-                "| **AI Technical Tutor** | Grounded code & architectural mentor | In-Memory RAG Vector Store + Gemini 1.5/2.0 API |",
+                "| **AI Technical Tutor** | Grounded code & architectural mentor | In-Memory RAG Vector Store + HuggingFace/Gemini |",
                 "```bash\n# Key Navigation Routes in LearnPath AI\n/overview           -> Dashboard & Progress Metrics\n/learning-path      -> Personalized Milestone Curriculum\n/algo-visualizer    -> 12 Interactive Algorithm Animations\n/resume-gap         -> PDF Resume Audit, 5 Curated Jobs & 30-Day Roadmap\n/resume-builder     -> 7-Step ATS Resume Builder & Free PDF Export\n/jobs               -> Adzuna Real-time Job Search & Skill Match\n/voice-interview    -> Live Speech Mock Interview Simulation\n/practice           -> 450+ Topic DSA Sheet & LeetCode/GFG Sync\n/quiz               -> 5-Level Adaptive Skill Assessment\n```",
-                "**Architecture Invariants**:\n- Client-Side React SPA with modular components.\n- Spring Boot 3 Java backend with RESTful microservice endpoints.\n- Per-user localStorage persistence ensures settings, skills, and progress are preserved across logins.",
                 "**Quick Navigation**:\n- Use the sidebar navigation menu on the left to switch between any of these tools instantly!"
         ));
     }
