@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LearnPath AI — AI-Powered Learning Companion & Adaptive Education Platform</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- React 18 & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+
+  <!-- Babel Standalone for Modular JSX -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Canvas Confetti, Marked, html2pdf, & pdf.js for Resume File Reading -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+    :root {
+      /* LIGHT THEME DESIGN TOKENS */
+      --bg-page: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-secondary: #f1f5f9;
+      --bg-surface-tertiary: #e2e8f0;
+
+      /* BORDERS & DIVIDERS */
+      --border-light: #e2e8f0;
+      --border-subtle: #edf2f7;
+      --border-focus: #6366f1;
+
+      /* BRAND & ACCENTS */
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --primary-border: #c7d2fe;
+
+      --accent-blue: #2563eb;
+      --accent-blue-light: #eff6ff;
+      --accent-purple: #7c3aed;
+      --accent-purple-light: #f5f3ff;
+
+      /* STATUS COLORS */
+      --success: #10b981;
+      --success-light: #ecfdf5;
+      --success-text: #065f46;
+      --success-border: #a7f3d0;
+
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --warning-text: #92400e;
+      --warning-border: #fde68a;
+
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --danger-text: #991b1b;
+      --danger-border: #fecaca;
+
+      /* TYPOGRAPHY COLORS */
+      --text-main: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --text-subtle: #94a3b8;
+
+      /* SHADOWS */
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+      --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+      --shadow-card-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      --shadow-elevated: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+      --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* CARD STYLES */
+    .saas-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      box-shadow: var(--shadow-card);
+      transition: all 0.2s ease;
+    }
+
+    .saas-card:hover {
+      box-shadow: var(--shadow-card-hover);
+      border-color: #cbd5e1;
+    }
+
+    /* INPUTS & CONTROLS */
+    .saas-input {
+      width: 100%;
+      padding: 9px 13px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      font-size: 0.86rem;
+      background: var(--bg-surface);
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .saas-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    }
+
+    /* BUTTONS */
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--primary);
+      color: #ffffff;
+      border-radius: 8px;
+      padding: 9px 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+      border-color: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--text-main);
+      font-weight: 600;
+      font-size: 0.88rem;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 9px 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-surface-secondary);
+      border-color: #cbd5e1;
+    }
+
+    .btn-subtle {
+      background: transparent;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.84rem;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-subtle:hover {
+      background: var(--bg-surface-secondary);
+      color: var(--text-main);
+    }
+
+    /* BADGES & PILLS */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .badge-primary {
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--primary-border);
+    }
+
+    .badge-success {
+      background: var(--success-light);
+      color: var(--success-text);
+      border: 1px solid var(--success-border);
+    }
+
+    .badge-warning {
+      background: var(--warning-light);
+      color: var(--warning-text);
+      border: 1px solid var(--warning-border);
+    }
+
+    .badge-danger {
+      background: var(--danger-light);
+      color: var(--danger-text);
+      border: 1px solid var(--danger-border);
+    }
+
+    .badge-neutral {
+      background: var(--bg-surface-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+    }
+
+    /* INPUTS */
+    .saas-input {
+      background: #ffffff;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.86rem;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.15s ease;
+      width: 100%;
+    }
+
+    .saas-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    }
+
+    .saas-input::placeholder {
+      color: var(--text-subtle);
+    }
+
+    /* PROGRESS BARS */
+    .progress-track {
+      width: 100%;
+      height: 7px;
+      background: var(--bg-surface-secondary);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+
+    /* CODE TYPOGRAPHY */
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* MARKDOWN CONTENT STYLING */
+    .markdown-content {
+      font-size: 0.86rem;
+      color: #334155;
+      line-height: 1.65;
+    }
+
+    .markdown-content p {
+      margin: 0 0 8px 0;
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+      margin: 4px 0 10px 0;
+      padding-left: 20px;
+    }
+
+    .markdown-content li {
+      margin-bottom: 4px;
+    }
+
+    .markdown-content code {
+      background: #f1f5f9;
+      color: #4f46e5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8em;
+      border: 1px solid #e2e8f0;
+    }
+
+    .markdown-content strong {
+      color: #0f172a;
+      font-weight: 700;
+    }
+
+    .markdown-content pre {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+      border: 1px solid #1e293b;
+    }
+
+    .markdown-content pre code {
+      background: transparent;
+      color: inherit;
+      border: none;
+      padding: 0;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* =========================================================================
+       MOBILE & TABLET RESPONSIVE RULES (MAX-WIDTH: 1024px & 768px & 480px)
+       ========================================================================= */
+    @media screen and (max-width: 1024px) {
+      .hero-grid-container {
+        grid-template-columns: 1fr !important;
+        padding: 28px 24px !important;
+        gap: 28px !important;
+      }
+      main {
+        padding: 20px 18px !important;
+      }
+    }
+
+    @media screen and (max-width: 768px) {
+      /* Mobile Header & Hamburger */
+      header {
+        padding: 0 14px !important;
+        height: auto !important;
+        min-height: 60px !important;
+      }
+
+      .mobile-menu-toggle-btn {
+        display: flex !important;
+      }
+
+      .mobile-sidebar-close-btn {
+        display: flex !important;
+      }
+
+      /* Slide-out Mobile Drawer */
+      .app-sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 280px !important;
+        height: 100vh !important;
+        z-index: 1000 !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: none !important;
+      }
+
+      .app-sidebar.mobile-open {
+        transform: translateX(0) !important;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.5) !important;
+      }
+
+      main {
+        padding: 16px 12px 84px 12px !important;
+      }
+
+      .mobile-bottom-nav {
+        display: flex !important;
+      }
+
+      .hero-grid-container {
+        grid-template-columns: 1fr !important;
+        padding: 22px 18px !important;
+        gap: 22px !important;
+        border-radius: 18px !important;
+      }
+
+      .hero-headline {
+        font-size: 1.75rem !important;
+        line-height: 1.25 !important;
+      }
+
+      .hero-cta-buttons {
+        flex-direction: column !important;
+        width: 100% !important;
+      }
+
+      .hero-cta-buttons button {
+        width: 100% !important;
+        justify-content: center !important;
+      }
+
+      .saas-card {
+        padding: 18px 16px !important;
+      }
+
+      .resume-workspace-grid {
+        grid-template-columns: 1fr !important;
+      }
+
+      iframe {
+        max-width: 100% !important;
+      }
+
+      canvas {
+        max-width: 100% !important;
+      }
+    }
+
+    @media screen and (max-width: 480px) {
+      .hero-headline {
+        font-size: 1.45rem !important;
+      }
+
+      .saas-card {
+        padding: 16px 14px !important;
+        border-radius: 12px !important;
+      }
+
+      main {
+        padding: 12px 10px 84px 10px !important;
+      }
+    }
+
+    /* HIGH-PRECISION A4 ATS RESUME PRINT STYLES */
+    @page {
+      size: A4 portrait;
+      margin: 8mm 12mm 8mm 12mm;
+    }
+
+    @media print {
+
+      body,
+      html {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .no-print,
+      header,
+      aside,
+      button,
+      select,
+      input,
+      textarea,
+      .badge {
+        display: none !important;
+      }
+
+      #root,
+      #root>div,
+      main {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      .resume-workspace-grid {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        grid-template-columns: 1fr !important;
+      }
+
+      .resume-preview-wrapper {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      #resume-preview {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: #ffffff !important;
+      }
+
+      a {
+        color: #1e40af !important;
+        text-decoration: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <!-- Modular Scripts & Components -->
+  <script type="text/babel" src="src/data/learningPathCurriculum.js?v=20260829_29"></script>
+  <script type="text/babel" src="src/data/dsaSheetData.js?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/Header.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/Sidebar.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/HomeView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/OnboardingView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/PersonalizePathModal.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/MyPathView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/DsaSheetView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/MockInterviewView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/ResumeBuilderView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/ChatbotView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/RoadmapView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/QuizView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/AboutView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/PracticeView.jsx?v=20260829_29"></script>
+  <script src="src/data/dsaProblemData.js?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/AlgorithmVisualizerView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/ResumeGapAnalyzerView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/JobRecommendationsView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/AuthModal.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/components/ProfileView.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/App.jsx?v=20260829_29"></script>
+  <script type="text/babel" src="src/main.jsx?v=20260829_29"></script>
+</body>
+
+</html>

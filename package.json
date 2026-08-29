@@ -1,0 +1,15 @@
+{
+  "name": "pathcraft-ai",
+  "version": "1.0.0",
+  "description": "AI-Powered Personalized Learning Path Recommender",
+  "scripts": {
+    "backend": "npm --prefix backend run dev || (cd backend && mvnw.cmd spring-boot:run)",
+    "backend:mvn": "cd backend && ./mvnw spring-boot:run",
+    "frontend": "npm run dev --prefix frontend",
+    "dev": "npx concurrently -k \"npm run backend\" \"npm run frontend\"",
+    "start": "npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -1,0 +1,38 @@
+services:
+  # 1. Spring Boot Backend Web Service
+  - type: web
+    name: learnpath-ai-backend
+    env: java
+    rootDir: backend
+    plan: free
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/pathcraft-backend-1.0.0-SNAPSHOT.jar
+    envVars:
+      - key: PORT
+        value: 8085
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:postgresql://db.ahbuobuzaavbdszhmwxf.supabase.co:5432/postgres?sslmode=require
+      - key: SPRING_DATASOURCE_USERNAME
+        value: postgres
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: Harsh@123Punam@123
+      - key: GEMINI_API_KEY
+        value: AIzaSyD9zkn_yJzOQSg-gKT_1o8iTxzoNzhThe0
+      - key: ADZUNA_APP_ID
+        value: 561aae10
+      - key: ADZUNA_APP_KEY
+        value: 1df006b77d79a54fc3ffba2ef183f89b
+      - key: CLOUDINARY_CLOUD_NAME
+        value: pathcraft-ai
+      - key: CLOUDINARY_API_KEY
+        value: "482762623825682"
+      - key: CLOUDINARY_API_SECRET
+        value: Br1X3TfUqxbDVdi1WHiX4pwSy2I
+
+  # 2. React / SaaS Frontend Static Site
+  - type: web
+    name: learnpath-ai-frontend
+    env: static
+    rootDir: frontend
+    plan: free
+    publishDir: .
