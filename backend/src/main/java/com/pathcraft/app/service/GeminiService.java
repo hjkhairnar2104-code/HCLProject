@@ -15,17 +15,18 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-    @Value("${gemini.api.key}")
+    @Value("${gemini.api.key:${GEMINI_API_KEY:AIzaSyCKAbcdq_NZNTQ57QYey4FjccTjhClXl-w}}")
     private String geminiApiKey;
 
     private final RestTemplate restTemplate;
 
     private static final String[] CANDIDATE_MODELS = {
-            "gemini-1.5-flash",
-            "gemini-2.0-flash",
-            "gemini-1.5-pro",
-            "gemini-2.0-flash-lite-preview-02-05",
-            "gemini-pro"
+            "gemini-2.5-flash",
+            "gemini-flash-latest",
+            "gemini-2.5-pro",
+            "gemini-pro-latest",
+            "gemini-2.5-flash-lite",
+            "gemini-2.5-flash-preview-tts"
     };
 
     public GeminiService() {

@@ -68,19 +68,19 @@ public class RagSynthesisService {
             messagesToSend.add(Map.of("role", "user", "text", userQuery));
         }
 
-        // 5. Try Hugging Face LLM First
-        try {
-            String hfResult = huggingFaceService.generateChatCompletion(messagesToSend, systemInstruction.toString());
-            if (hfResult != null && !hfResult.isBlank() && hfResult.trim().length() > 20) {
-                return hfResult;
-            }
-        } catch (Exception ignored) {}
-
-        // 6. Try Gemini AI LLM Second
+        // 5. Try Google Gemini AI LLM First (Lightning-fast 2.5-Flash)
         try {
             String aiResult = geminiService.generateContentWithHistory(messagesToSend, systemInstruction.toString());
             if (aiResult != null && !aiResult.isBlank() && aiResult.trim().length() > 20) {
                 return aiResult;
+            }
+        } catch (Exception ignored) {}
+
+        // 6. Try Hugging Face LLM Second
+        try {
+            String hfResult = huggingFaceService.generateChatCompletion(messagesToSend, systemInstruction.toString());
+            if (hfResult != null && !hfResult.isBlank() && hfResult.trim().length() > 20) {
+                return hfResult;
             }
         } catch (Exception ignored) {}
 
