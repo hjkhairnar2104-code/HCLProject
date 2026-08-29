@@ -3,39 +3,155 @@ function ChatbotView({ user, setActiveTab }) {
 
   const generateDynamicPromptGuide = (query) => {
     const lower = (query || '').toLowerCase().trim();
-    const cleanTopic = (query || '').replace(/(what is|how to learn|roadmap for|explain|difference between|tell me about|what should be my roadmap for|roadmap|\?)/gi, '').trim() || (query || 'Topic');
+    let cleanTopic = (query || '')
+      .replace(/^(hi|hello|hey|please|can you|tell me|give me|what is|how to learn|explain me|explain|roadmap of|roadmap for|what should be my roadmap for|roadmap|\?)+/gi, '')
+      .replace(/(roadmap|guide|tutorial|\?)+/gi, '')
+      .trim() || (query || 'Technology');
+
+    if (lower.includes('two sum') || lower.includes('2 sum')) {
+      return `### 💡 Two Sum Problem — Complete Solution & Explanation (LeetCode #1)
+
+#### 📝 Problem Statement
+Given an array of integers \`nums\` and an integer \`target\`, return *indices of the two numbers such that they add up to \`target\`*. You may assume that each input would have **exactly one solution**, and you may not use the same element twice.
+
+---
+
+#### 🧠 Solution Approaches & Intuition
+
+1. **Brute Force Approach ($O(N^2)$ Time, $O(1)$ Space)**:
+   - Check every pair \`(i, j)\` using nested loops.
+   - Too slow for large inputs ($N > 10^4$).
+
+2. **Optimal One-Pass Hash Map ($O(N)$ Time, $O(N)$ Space)**:
+   - As we iterate through \`nums\`, compute the complement: \`complement = target - nums[i]\`.
+   - If \`complement\` already exists in our Hash Map, we have found our answer: \`[map.get(complement), i]\`.
+   - Otherwise, store the current number and its index: \`map.put(nums[i], i)\`.
+
+---
+
+#### 💻 Optimal Java Code ($O(N)$)
+
+\`\`\`java
+import java.util.HashMap;
+import java.util.Map;
+
+public class TwoSum {
+    public int[] twoSum(int[] nums, int target) {
+        // Map to store: Key = number value, Value = index
+        Map<Integer, Integer> numMap = new HashMap<>();
+
+        for (int i = 0; i < nums.length; i++) {
+            int complement = target - nums[i];
+
+            // If the complement is already in the map, return indices
+            if (numMap.containsKey(complement)) {
+                return new int[] { numMap.get(complement), i };
+            }
+
+            // Store current number with its index
+            numMap.put(nums[i], i);
+        }
+
+        throw new IllegalArgumentException("No two sum solution found");
+    }
+}
+\`\`\`
+
+---
+
+#### 📊 Complexity Analysis
+- **Time Complexity**: **$O(N)$** — We traverse the array of length $N$ only once. Hash Map lookups and insertions take $O(1)$ on average.
+- **Space Complexity**: **$O(N)$** — The Hash Map stores at most $N$ elements.`;
+    }
+
+    if (lower.includes('machine learning') || lower.includes('ml roadmap')) {
+      return `### 🤖 Comprehensive Machine Learning Engineering Roadmap (Zero to Production)
+
+Here is an actionable, industry-aligned step-by-step roadmap to master **Machine Learning** and modern AI systems:
+
+---
+
+#### 📅 Phase 1: Mathematical Foundations & Python for Data Science (Weeks 1–3)
+- **Linear Algebra**: Vectors, Matrices, Eigenvalues, Dot Products, Matrix Factorization.
+- **Multivariate Calculus**: Gradients, Derivatives, Partial Derivatives, Chain Rule, Gradient Descent.
+- **Probability & Statistics**: Bayes' Theorem, Probability Distributions, Hypothesis Testing, Central Limit Theorem.
+- **Core Python Ecosystem**: \`NumPy\` (array vectorization), \`Pandas\` (data wrangling), \`Matplotlib\` & \`Seaborn\` (data visualization).
+- 🛠️ **Project**: *Exploratory Data Analysis (EDA) & Customer Churn Prediction Dataset*.
+
+---
+
+#### 📅 Phase 2: Classical Machine Learning & Algorithms (Weeks 4–7)
+- **Supervised Learning**:
+  - Linear & Logistic Regression (Loss functions, MSE, Cross-Entropy).
+  - Decision Trees, Random Forests, Gradient Boosted Trees (**XGBoost**, **LightGBM**, **CatBoost**).
+  - Support Vector Machines (SVM) & k-Nearest Neighbors (k-NN).
+- **Unsupervised Learning**:
+  - k-Means Clustering, Hierarchical Clustering, DBSCAN.
+  - Dimensionality Reduction: Principal Component Analysis (PCA), t-SNE.
+- **Evaluation Metrics**: Precision, Recall, F1-Score, ROC-AUC, Confusion Matrix, Cross-Validation.
+- 🛠️ **Project**: *End-to-End Real Estate Price Valuation Engine with XGBoost*.
+
+---
+
+#### 📅 Phase 3: Deep Learning & Neural Architectures (Weeks 8–11)
+- **Deep Learning Frameworks**: **PyTorch** (Tensors, Autograd, \`nn.Module\`, DataLoader).
+- **Multi-Layer Perceptrons (MLP)**: Backpropagation, Activation functions (ReLU, GELU, Sigmoid), Optimizers (AdamW, SGD).
+- **Computer Vision (CNNs)**: ResNet, EfficientNet, Transfer Learning.
+- **Sequence Modeling & Transformers**: Self-Attention mechanism, Transformer encoders/decoders, HuggingFace \`transformers\`.
+- 🛠️ **Project**: *Image Classifier & Sentiment Analysis Pipeline using PyTorch*.
+
+---
+
+#### 📅 Phase 4: MLOps, LLMs & Production Deployment (Weeks 12–14)
+- **Generative AI & LLMs**: Fine-tuning (LoRA, QLoRA), Vector DBs (FAISS/Chroma), RAG pipelines, LangChain.
+- **MLOps & Serving**: Docker containerization, FastAPI model endpoints, MLflow experiment tracking.
+- 🚀 **Capstone**: *Real-Time Multimodal AI Assistant deployed with FastAPI, Docker & Streamlit*.`;
+    }
+
+    if (lower.includes('learnpath') || lower.includes('platform feature') || lower.includes('what can this app do') || lower.includes('features')) {
+      return `### 🧠 LearnPath AI — Complete Platform Capabilities & Engineering Suite
+
+LearnPath AI is an integrated, AI-driven career and engineering acceleration platform. Here is everything available:
+
+1. 💻 **Algorithm Visualizer (12 Interactive Visualizers)**:
+   - Step-by-step canvas animations for Sorting (Bubble, Quick, Merge), Two Pointers, Binary Search, Graphs (BFS, DFS, Dijkstra), Trees (BST, Traversal), and Dynamic Programming (0/1 Knapsack).
+   - Features line-by-line pseudocode tracking, custom input arrays, and playback speed sliders.
+
+2. 📄 **Resume Gap AI & 30-Day Preparation Roadmap**:
+   - Ingests PDF/DOC resumes, calculates ATS readiness score (0–100%), suggests Google X-Y-Z bullet rewrites, identifies missing skills, matches top curated jobs, and generates a structured 4-week preparation sprint.
+
+3. 📝 **7-Step ATS Resume Builder**:
+   - Live A4 preview with 4 professional templates, custom project cards, verified LeetCode/GFG links, and instant free unwatermarked PDF export.
+
+4. 💼 **Find Jobs & Live Match % (Adzuna API)**:
+   - Live listings from top tech companies with real-time skill overlap scoring and missing skill alerts.
+
+5. 🎯 **Adaptive My Learning Path**:
+   - Milestone progression across 14 engineering domains (Full Stack, AI/ML, System Design, DevOps, DSA, Java) with prerequisite locking and trackable progress.
+
+6. 🎙️ **Live Voice AI Mock Interview**:
+   - Real-time spoken technical interview simulation using Web Speech API STT/TTS with instant feedback.
+
+7. ⚔️ **Practice Hub & 450+ DSA Sheet**:
+   - Topic-wise problem bank with difficulty filters, LeetCode/GFG links, and solved problem tracking.
+
+8. 📊 **5-Level Assessment Quiz Engine**:
+   - Adaptive difficulty quizzes with real-time scoring and skill verification badges.
+
+9. 🤖 **AI Technical Tutor (Gemini 2.5 Flash)**:
+   - Staff-level coding and system design mentor for code generation, debugging, and roadmaps.`;
+    }
 
     if (lower.includes('langchain')) {
       return `### 🦜🔗 Production LangChain & AI Agent Mastery Roadmap
 
 Here is a structured, production-ready 4-Week Roadmap to master **LangChain**, Vector Databases, RAG architectures, and Autonomous AI Agents:
-
-#### 📅 Week 1: Core Fundamentals & LCEL (LangChain Expression Language)
-- **Prompt Engineering**: \`ChatPromptTemplate\`, System vs Human messages, Few-Shot formatting.
-- **Output Parsers**: Enforcing strict JSON schemas using \`PydanticOutputParser\` and \`StrOutputParser\`.
-- **LCEL Pipe Syntax**: Composing pipelines: \`chain = prompt | model | parser\`.
-- 🛠️ **Project**: *Interactive Code Explainer & Automated Unit-Test Generator*.
-
-#### 📅 Week 2: Document Processing, Embeddings & Vector Databases (RAG)
-- **Document Loaders & Chunking**: \`RecursiveCharacterTextSplitter\` with token overlap invariants.
-- **Embeddings & Vector Stores**: OpenAI/HuggingFace embeddings with **FAISS**, **ChromaDB**, or **Pinecone**.
-- **Retrievers**: Multi-Query Retriever, Contextual Compression, and BM25 + Vector Hybrid Search.
-- 🛠️ **Project**: *Enterprise PDF Documentation Chatbot with Exact Page & Paragraph Citations*.
-
-#### 📅 Week 3: Memory, Custom Tools & ReAct Agents
-- **Stateful Memory**: \`ConversationBufferWindowMemory\`, SQLite-backed session persistence.
-- **Custom Tool Calling**: Using \`@tool\` decorator with Pydantic validation schemas.
-- **ReAct Agents**: \`create_tool_calling_agent\` combining Reason + Act loop for dynamic execution.
+{{ ... }}
 - 🛠️ **Project**: *Autonomous SQL Database Query & Chart Plotting Agent*.
 
 #### 📅 Week 4: LangGraph Multi-Agent Workflows & Production Evaluation
 - **LangGraph State Graphs**: Multi-agent nodes, conditional edge routing, human-in-the-loop approvals.
 - **Observability & Tracing**: Integrating **LangSmith** and **Ragas** framework for latency and hallucination metrics.
-- 🚀 **Capstone**: *Autonomous Software Architecture Reviewer & Code Generator*.
-
-\`\`\`python
-# Production LCEL + FAISS Vector Store Pipeline
-from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
