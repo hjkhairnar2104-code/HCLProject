@@ -191,6 +191,60 @@ public class Trie {
 3. **Interactive Practice**:
    - You can test and benchmark this concept directly in **My Learning Path** and **Algo Visualizer**!`;
   };
+
+  const requestChatGptAnswer = async (query, historyPayload) => {
+    // 1. Send request to Backend API (which calls Gemini 2.5 Flash on Render)
+    try {
+      const res = await fetch(`${API_BASE}/api/chatbot/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: query,
+          history: historyPayload,
+          userContext: user ? `User: ${user.fullName || user.email}` : "Target: Software & AI Engineer"
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.response || data.reply;
+        if (text && text.trim().length > 0) {
+          return text;
+        }
+      }
+    } catch (e) {
+      console.warn("Backend API request error:", e);
+    }
+
+    // 2. Direct client-side Gemini 2.5 Flash call as immediate fallback
+    try {
+      const geminiKey = "AIzaSyCKAbcdq_NZNTQ57QYey4FjccTjhClXl-w";
+      const contents = (historyPayload || []).map(m => ({
+        role: m.role === 'assistant' || m.role === 'ai' ? 'model' : 'user',
+        parts: [{ text: m.text || m.content || '' }]
+      }));
+
+      const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: contents.length > 0 ? contents : [{ role: 'user', parts: [{ text: query }] }]
+        })
+      });
+
+      if (geminiRes.ok) {
+        const geminiData = await geminiRes.json();
+        const replyText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyText && replyText.trim().length > 0) {
+          return replyText;
+        }
+      }
+    } catch (gErr) {
+      console.warn("Direct client Gemini call error:", gErr);
+    }
+
+    return generateDynamicPromptGuide(query);
+  };
   // Helper to isolate chat threads per user
   const getChatStorageKey = (u) => {
     if (u && u.email) return `learnpath_chat_threads_${u.email.toLowerCase().trim()}`;
